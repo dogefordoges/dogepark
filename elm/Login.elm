@@ -6,12 +6,28 @@ import Html.Events exposing (onInput)
 import Crypto.Hash exposing (sha512)
 
 
-main =
-    Html.beginnerProgram { model = model, view = view, update = update }
+        
+main = programWithFlags { init = model
+                        , view = view
+                        , update = update
+                        , subscriptions = subscriptions
+                        }
+
+-- SUBSCRIPTION                
 
 
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Sub.none
+
+        
 
 -- MODEL
+
+
+type alias Flags =
+    { signedUp : String }
+
     
 type alias Model =
     { signUpName : String
@@ -19,13 +35,15 @@ type alias Model =
     , signUpPasswordAgain : String
     , signInName : String
     , signInPassword : String
+    , signedUp : String
     }
 
 
-model : Model
-model =
-    Model "" "" "" "" ""
+model : Flags -> (Model, Cmd Msg)
+model flags =
+    (Model "" "" "" "" "" flags.signedUp, Cmd.none)
 
+        
 -- UPDATE
 
 
@@ -37,31 +55,36 @@ type Msg
     | SignInPassword String
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         SignUpName name ->
-            { model | signUpName = name }
+            ({ model | signUpName = name }, Cmd.none)
 
         SignUpPassword password ->
-            { model | signUpPassword = password }
+            ({ model | signUpPassword = password }, Cmd.none)
 
         SignUpPasswordAgain password ->
-            { model | signUpPasswordAgain = password }
+            ({ model | signUpPasswordAgain = password }, Cmd.none)
 
         SignInName name ->
-            { model | signInName = name }
+            ({ model | signInName = name }, Cmd.none)
 
         SignInPassword password ->
-            { model | signInPassword = password }
+            ({ model | signInPassword = password }, Cmd.none)
                 
 
 -- VIEW
 
+
 view : Model -> Html Msg
 view model =
-    div [] [ signUpView model, signInView model ]
+    div [] [ signUpView model
+           , signInView model
+           , text model.signedUp
+           ]
 
+        
 signInView : Model -> Html Msg
 signInView model =
     div []        
@@ -71,6 +94,7 @@ signInView model =
         , a [ href ("/signin" ++ (urlParams model.signInName model.signInPassword)) ] [ text "Sign In" ]
         ]        
 
+        
 signUpView : Model -> Html Msg
 signUpView model =
     div []        
@@ -82,6 +106,7 @@ signUpView model =
         , viewValidation model
         ]
 
+        
 viewValidation : Model -> Html msg
 viewValidation model =
     let

@@ -10,16 +10,16 @@ get '/' do
   erb :index, :locals => {:signed_up => ""}
 end
 
-get '/dogepark' do
-  erb :dogepark
-end
-
 get '/signin' do
   username = params['username']
   password = params['password']
   if password && username
     if @@users.has_key? username
-      redirect "/dogepark"
+      if @@users[username][:password] == password
+        redirect "/dogepark?username=" + username
+      else
+        erb :index, :locals => {:signed_up => "password incorrect"}
+      end
     else
       erb :index, :locals => {:signed_up => "not signed up"}
     end
@@ -37,6 +37,11 @@ get '/signup' do
   else
     halt(404)
   end
+end
+
+get '/dogepark' do
+  username = params['username']
+  erb :dogepark
 end
 
 not_found do
