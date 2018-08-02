@@ -1,4 +1,4 @@
-module Main exposing (..)
+module DogePark exposing (..)
 
 import Geolocation exposing (Location)
 import Html exposing (..)
