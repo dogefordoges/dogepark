@@ -2,9 +2,18 @@
 
 Interactive web based wallet with other gadgets for Dogecoin. Inspired by http://www.dogerain.rocks/.
 
-# Development
+# Installation
+
+## Elm dependency
 
 You will need to install elm
-`npm install -g elm elm-package elm-make elm-reactor`
+`npm install -g elm elm-package`
 
-You can view the site by running elm-reactor. Then navigate to the page Ex: localhost:8000/DogePark.elm
+Then do `elm-package install`
+
+## Ruby Dependencies
+`bundle install`
+
+# Usage
+
+Start by compiling the Elm files into js with `ruby compile_elm.rb`, then run `ruby dogepark.rb`. 
