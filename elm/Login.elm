@@ -6,21 +6,22 @@ import Html.Events exposing (onInput)
 import Crypto.Hash exposing (sha512)
 
 
-        
-main = programWithFlags { init = model
-                        , view = view
-                        , update = update
-                        , subscriptions = subscriptions
-                        }
+main =
+    programWithFlags
+        { init = model
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        }
 
--- SUBSCRIPTION                
+
+-- SUBSCRIPTION
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.none
 
-        
 
 -- MODEL
 
@@ -28,7 +29,7 @@ subscriptions _ =
 type alias Flags =
     { signedUp : String }
 
-    
+
 type alias Model =
     { signUpName : String
     , signUpPassword : String
@@ -39,11 +40,27 @@ type alias Model =
     }
 
 
-model : Flags -> (Model, Cmd Msg)
+model : Flags -> ( Model, Cmd Msg )
 model flags =
-    (Model "" "" "" "" "" flags.signedUp, Cmd.none)
+    ( Model "" "" "" "" "" flags.signedUp, Cmd.none )
 
-        
+
+translateSignedUp : Model -> String
+translateSignedUp model =
+    case model.signedUp of
+        "signed up" ->
+            "You've been signed up! Go ahead and log in!"
+
+        "password incorrect" ->
+            "The username or password you put in is incorrect, please try again."
+
+        "not signed up" ->
+            "The username you entered is not registered. Go ahead and sign up to make an account!"
+
+        _ ->
+            ""
+
+
 -- UPDATE
 
 
@@ -55,50 +72,51 @@ type Msg
     | SignInPassword String
 
 
-update : Msg -> Model -> (Model, Cmd Msg)
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SignUpName name ->
-            ({ model | signUpName = name }, Cmd.none)
+            ( { model | signUpName = name }, Cmd.none )
 
         SignUpPassword password ->
-            ({ model | signUpPassword = password }, Cmd.none)
+            ( { model | signUpPassword = password }, Cmd.none )
 
         SignUpPasswordAgain password ->
-            ({ model | signUpPasswordAgain = password }, Cmd.none)
+            ( { model | signUpPasswordAgain = password }, Cmd.none )
 
         SignInName name ->
-            ({ model | signInName = name }, Cmd.none)
+            ( { model | signInName = name }, Cmd.none )
 
         SignInPassword password ->
-            ({ model | signInPassword = password }, Cmd.none)
-                
+            ( { model | signInPassword = password }, Cmd.none )
+
 
 -- VIEW
 
 
 view : Model -> Html Msg
 view model =
-    div [] [ signUpView model
-           , signInView model
-           , text model.signedUp
-           ]
+    div []
+        [ signUpView model
+        , signInView model
+        , text (translateSignedUp model)
+        ]
 
-        
+
 signInView : Model -> Html Msg
 signInView model =
-    div []        
-        [ h2 [] [text "Sign In"]
+    div []
+        [ h2 [] [ text "Sign In" ]
         , input [ type_ "text", placeholder "Name", onInput SignInName ] []
         , input [ type_ "password", placeholder "Password", onInput SignInPassword ] []
         , a [ href ("/signin" ++ (urlParams model.signInName model.signInPassword)) ] [ text "Sign In" ]
-        ]        
+        ]
 
-        
+
 signUpView : Model -> Html Msg
 signUpView model =
-    div []        
-        [ h2 [] [text "Sign Up"]
+    div []
+        [ h2 [] [ text "Sign Up" ]
         , input [ type_ "text", placeholder "Name", onInput SignUpName ] []
         , input [ type_ "password", placeholder "Password", onInput SignUpPassword ] []
         , input [ type_ "password", placeholder "Re-enter Password", onInput SignUpPasswordAgain ] []
@@ -106,7 +124,7 @@ signUpView model =
         , viewValidation model
         ]
 
-        
+
 viewValidation : Model -> Html msg
 viewValidation model =
     let
@@ -119,7 +137,7 @@ viewValidation model =
                 ( "red", "Passwords do not match!" )
     in
         div [ style [ ( "color", color ) ] ] [ text message ]
-        
+
 
 urlParams : String -> String -> String
 urlParams name password =

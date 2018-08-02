@@ -7,7 +7,7 @@ def new_user(username, password)
 end
 
 get '/' do
-  erb :index, :locals => {:signed_up => ""}
+  erb :index, :locals => { :signed_up => "\" \"" }
 end
 
 get '/signin' do
@@ -18,10 +18,10 @@ get '/signin' do
       if @@users[username][:password] == password
         redirect "/dogepark?username=" + username
       else
-        erb :index, :locals => {:signed_up => "password incorrect"}
+        erb :index, :locals => {:signed_up => "\"password incorrect\""}
       end
     else
-      erb :index, :locals => {:signed_up => "not signed up"}
+      erb :index, :locals => {:signed_up => "\"not signed up\""}
     end
   else
     halt(404)
@@ -33,7 +33,7 @@ get '/signup' do
   password = params['password']
   if password && username
     new_user(username, password)
-    erb :index, :locals => {:signed_up => "signed up"}
+    erb :index, :locals => {:signed_up => "\"signed up\""}
   else
     halt(404)
   end
