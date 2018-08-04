@@ -20,6 +20,7 @@ type alias Model =
     , rainRadius : Float
     , bowlAmount : Float
     , bowlCode : String
+    , biteAmount : Float
     }
 
 
@@ -38,6 +39,7 @@ init =
       , rainRadius = 0
       , bowlAmount = 0
       , bowlCode = ""
+      , biteAmount = 0
       }
     , Task.attempt UpdateLocation Geolocation.now
     )
@@ -73,8 +75,10 @@ type Msg
     | Withdraw
     | RainAmount String
     | RainRadius String
+    | SaveLocation
     | Rain
     | BowlAmount String
+    | BiteAmount String      
     | NewBowl
     | BowlCode String
     | RedeemBowl
@@ -85,43 +89,39 @@ update msg model =
     case msg of
         UpdateLocation result ->
             ( { model | location = Result.map Just result }, Cmd.none )
-
                 
         WithdrawalAddress address ->
             ( { model | withdrawalAddress = address }, Cmd.none )
-
                 
         WithdrawalAmount amount ->
             ( { model | withdrawalAmount = Result.withDefault 0 (String.toFloat amount) }, Cmd.none )
 
-
         Withdraw ->
             ( model, Cmd.none )
                 
-
         RainAmount amount ->
             ( { model | rainAmount = Result.withDefault 0 (String.toFloat amount) }, Cmd.none )
-
 
         RainRadius radius ->
             ( { model | rainRadius = Result.withDefault 0 (String.toFloat radius) }, Cmd.none )
 
-
         Rain ->
             (model, Cmd.none)
 
+        SaveLocation ->
+            (model, Cmd.none)
 
         BowlAmount amount ->
             ( { model | bowlAmount = Result.withDefault 0 (String.toFloat amount) }, Cmd.none )
 
+        BiteAmount amount ->
+            ( { model | biteAmount = Result.withDefault 0 (String.toFloat amount) }, Cmd.none )                
 
         NewBowl ->
             (model, Cmd.none)
 
-
         BowlCode code ->
             ( { model | bowlCode = code }, Cmd.none )
-
 
         RedeemBowl ->
             ( model, Cmd.none)
@@ -153,13 +153,12 @@ walletView model =
     div []
         [ h1 [] [ text "Wallet" ]
         , h2 [] [ text ("address: " ++ model.address) ]
-        , h2 [] [ text ("balance: " ++ (toString model.balance) ++ " Ð") ]
+        , h2 [] [ text ("balance: " ++ (toString model.balance) ++ " Ð") ]        
         , input [ type_ "withdrawalAddress", placeholder "Withdrawal Address", onInput WithdrawalAddress ] []
         , input [ type_ "withdrawalAmount", placeholder "Withdrawal Amount", onInput WithdrawalAmount ] []
         , button [ onClick Withdraw ] [ text "Withdraw" ]
         ]
        
-
 rainView : Model -> Html Msg
 rainView model =
     let
@@ -169,22 +168,37 @@ rainView model =
             [ h1 [] [ text "Rain" ]
             , h2 [] [ text ("latitude: " ++ (toString l.latitude)) ]
             , h2 [] [ text ("longitude: " ++ (toString l.longitude)) ]
+            , saveLocationView
             , input [ type_ "rainAmount", placeholder "Rain Amount", onInput RainAmount ] []
             , input [ type_ "rainRadius", placeholder "Rain Radius", onInput RainRadius ] []
             , button [ onClick Rain ] [ text "Rain" ]
             ]
 
+saveLocationView : Html Msg
+saveLocationView =                   
+                 div []
+                     [ button [ onClick SaveLocation] [ text "Save Location" ]
+                     , text "If you want to receive doge from rain events, you have to save your location at least once. "
+                     ]
 
 bowlView : Model -> Html Msg
 bowlView model =
     div []
         [ h1 [] [ text "Bowl" ]
-        , input [ type_ "bowlAmount", placeholder "Bowl Amount", onInput BowlAmount ] []
-        , button [ onClick NewBowl ] [ text "New Bowl" ]
-        , input [ type_ "bowlCode", placeholder "Bowl Code", onInput BowlCode ] []
-        , button [ onClick RedeemBowl ] [ text "Redeem Bowl" ]
+        , h2 [] [ text "Make New Bowl"]
+        , text "You can create a bowl for other shibes to get bites out of. Set the total amount, and the bite size for each shibe."
+        , div []
+          [ input [ type_ "bowlAmount", placeholder "Bowl Amount", onInput BowlAmount ] []
+          , input [ type_ "biteAmount", placeholder "Bite Amount", onInput BiteAmount ] []
+          , button [ onClick NewBowl ] [ text "New Bowl" ]
+          ]
+        , h2 [] [ text "Redeem Bowl" ]
+        , text "If you know a bowl code, go ahead and try to receive some free doge!"
+        , div []
+          [ input [ type_ "bowlCode", placeholder "Bowl Code", onInput BowlCode ] []
+          , button [ onClick RedeemBowl ] [ text "Redeem Bowl" ]
+          ]
         ]
-              
         
 main : Program Never Model Msg
 main =

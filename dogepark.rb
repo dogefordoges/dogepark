@@ -16,6 +16,7 @@ get '/signin' do
   if password && username
     if @@users.has_key? username
       if @@users[username][:password] == password
+        @@users[username][:signed_in] = true
         redirect "/dogepark?username=" + username
       else
         erb :index, :locals => {:signed_up => "\"password incorrect\""}
@@ -41,7 +42,15 @@ end
 
 get '/dogepark' do
   username = params['username']
-  erb :dogepark
+  if @@users.has_key? username
+    if @@users[username][:signed_in] = true
+      erb :dogepark
+    else
+      redirect "/"
+    end
+  else
+    redirect "/"
+  end
 end
 
 not_found do
