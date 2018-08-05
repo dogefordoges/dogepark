@@ -2,5 +2,8 @@
 <script src="elm/dogepark.js"></script>
 <script>
     var node = document.getElementById('main');
-    var app = Elm.DogePark.embed(node, {address: "<%= address %>"});
+    var app = Elm.DogePark.embed(node, {
+    	address: "<%= address %>",
+	username: "<%= username %>"
+    });
 </script>

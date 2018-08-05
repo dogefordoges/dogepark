@@ -48,7 +48,10 @@ get '/dogepark' do
   username = params['username']
   if @@users.has_key? username
     if @@users[username][:signed_in] = true
-      erb :dogepark, :locals => {:address => @@users[username][:address]}
+      erb :dogepark, :locals => {
+            :address => @@users[username][:address],
+            :username => username
+          }
     else
       redirect "/"
     end
@@ -64,6 +67,23 @@ get '/balance' do
   else
     status 500
     body "Address not found"
+  end
+end
+
+post '/location' do
+
+  payload = JSON.parse(request.body.read)
+  username = payload["username"]
+  latitude = payload["latitude"]
+  longitude = payload["longitude"]
+
+  if @@users.has_key? username
+    @@users[username][:latitude] = latitude
+    @@users[username][:longitude] = longitude
+    {:message => "Location saved!"}.to_json
+  else
+    status 500
+    body "User not found"
   end
 end
 

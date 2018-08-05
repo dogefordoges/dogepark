@@ -7,13 +7,16 @@ import Html.Events exposing (onInput, onClick)
 import Task
 import Http
 import Json.Decode as Decode
+import Json.Encode as Encode
 
 
 -- MODEl
 
 
 type alias Flags =
-     { address : String }
+    { address : String
+    , username : String
+    }
 
 
 type alias Model =
@@ -27,6 +30,8 @@ type alias Model =
     , bowlAmount : Float
     , bowlCode : String
     , biteAmount : Float
+    , username : String
+    , locationMessage : String
     }
 
 
@@ -46,23 +51,26 @@ init flags =
       , bowlAmount = 0
       , bowlCode = ""
       , biteAmount = 0
+      , username = flags.username
+      , locationMessage = "If you want to receive doge from local rain events, you have to save your current location at least once. "
       }
-    , Cmd.batch [ Task.attempt UpdateLocation Geolocation.now
-                , getBalance flags.address
-                ]
+    , Cmd.batch
+        [ Task.attempt UpdateLocation Geolocation.now
+        , getBalance flags.address
+        ]
     )
 
-    
+
 defaultShibeLocation : ShibeLocation
 defaultShibeLocation =
     { latitude = 0, longitude = 0 }
 
-        
+
 toShibeLocation : Location -> ShibeLocation
 toShibeLocation loc =
     { latitude = loc.latitude, longitude = loc.longitude }
 
-        
+
 handleLocation : Model -> ShibeLocation
 handleLocation model =
     case model.location of
@@ -75,13 +83,46 @@ handleLocation model =
 
 getBalance : String -> Cmd Msg
 getBalance address =
-           Http.send UpdateBalance (Http.get ("/balance?address=" ++ address) decodeBalance)
+    Http.send UpdateBalance (Http.get ("/balance?address=" ++ address) decodeBalance)
 
 
 decodeBalance : Decode.Decoder Float
 decodeBalance =
-              Decode.field "balance" Decode.float
-              
+    Decode.field "balance" Decode.float
+
+
+persistLocation : Model -> Cmd Msg
+persistLocation model =
+    Http.send PersistLocation (Http.post "/location" (Http.jsonBody (encodeLocationPost model)) decodeLocationMessage)
+
+
+encodeLocationPost : Model -> Encode.Value
+encodeLocationPost model =
+    let
+        l =
+            handleLocation model
+    in
+        Encode.object
+            [ ( "latitude", Encode.float l.latitude )
+            , ( "longtiude", Encode.float l.longitude )
+            , ( "username", Encode.string model.username )
+            ]
+
+
+decodeLocationMessage : Decode.Decoder String
+decodeLocationMessage =
+    Decode.field "message" Decode.string
+
+
+errorToString : Http.Error -> String
+errorToString error =
+    case error of
+        Http.BadStatus e ->
+            ("Error: " ++ (toString e.status.code) ++ " " ++ e.body)
+
+        _ ->
+            "Error"
+
 
 -- UPDATE
 
@@ -96,9 +137,10 @@ type Msg
     | RainAmount String
     | RainRadius String
     | SaveLocation
+    | PersistLocation (Result Http.Error String)
     | Rain
     | BowlAmount String
-    | BiteAmount String      
+    | BiteAmount String
     | NewBowl
     | BowlCode String
     | RedeemBowl
@@ -109,10 +151,10 @@ update msg model =
     case msg of
         UpdateLocation result ->
             ( { model | location = Result.map Just result }, Cmd.none )
-                
+
         WithdrawalAddress address ->
             ( { model | withdrawalAddress = address }, Cmd.none )
-                
+
         WithdrawalAmount amount ->
             ( { model | withdrawalAmount = Result.withDefault 0 (String.toFloat amount) }, Cmd.none )
 
@@ -126,8 +168,8 @@ update msg model =
             ( { model | balance = balance }, Cmd.none )
 
         UpdateBalance (Err _) ->
-            ( model, Cmd.none)
-                
+            ( model, Cmd.none )
+
         RainAmount amount ->
             ( { model | rainAmount = Result.withDefault 0 (String.toFloat amount) }, Cmd.none )
 
@@ -135,33 +177,40 @@ update msg model =
             ( { model | rainRadius = Result.withDefault 0 (String.toFloat radius) }, Cmd.none )
 
         Rain ->
-            (model, Cmd.none)
+            ( model, Cmd.none )
 
         SaveLocation ->
-            (model, Cmd.none)
+            ( model, persistLocation model )
+
+        PersistLocation (Ok message) ->
+            ( { model | locationMessage = message }, Cmd.none )
+
+        PersistLocation (Err error) ->
+            ( { model | locationMessage = (errorToString error) }, Cmd.none )
 
         BowlAmount amount ->
             ( { model | bowlAmount = Result.withDefault 0 (String.toFloat amount) }, Cmd.none )
 
         BiteAmount amount ->
-            ( { model | biteAmount = Result.withDefault 0 (String.toFloat amount) }, Cmd.none )                
+            ( { model | biteAmount = Result.withDefault 0 (String.toFloat amount) }, Cmd.none )
 
         NewBowl ->
-            (model, Cmd.none)
+            ( model, Cmd.none )
 
         BowlCode code ->
             ( { model | bowlCode = code }, Cmd.none )
 
         RedeemBowl ->
-            ( model, Cmd.none)
+            ( model, Cmd.none )
 
 
--- SUBSCRIPTION                
+-- SUBSCRIPTION
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.none
+
 
 
 -- VIEW
@@ -190,48 +239,49 @@ walletView model =
         , input [ type_ "withdrawalAmount", placeholder "Withdrawal Amount", onInput WithdrawalAmount ] []
         , button [ onClick Withdraw ] [ text "Withdraw" ]
         ]
-       
+
+
 rainView : Model -> Html Msg
 rainView model =
     let
-        l = handleLocation model
-    in  
+        l =
+            handleLocation model
+    in
         div []
             [ h1 [] [ text "Rain" ]
             , h2 [] [ text ("latitude: " ++ (toString l.latitude)) ]
             , h2 [] [ text ("longitude: " ++ (toString l.longitude)) ]
-            , saveLocationView
+            , saveLocationView model
             , input [ type_ "rainAmount", placeholder "Rain Amount", onInput RainAmount ] []
             , input [ type_ "rainRadius", placeholder "Rain Radius", onInput RainRadius ] []
             , button [ onClick Rain ] [ text "Rain" ]
             ]
 
 
-saveLocationView : Html Msg
-saveLocationView =                   
-                 div []
-                     [ button [ onClick SaveLocation] [ text "Save Location" ]
-                     , text "If you want to receive doge from rain events, you have to save your location at least once. "
-                     ]
-
+saveLocationView : Model -> Html Msg
+saveLocationView model =
+    div []
+        [ button [ onClick SaveLocation ] [ text "Save Location" ]
+        , text model.locationMessage
+        ]
 
 bowlView : Model -> Html Msg
 bowlView model =
     div []
         [ h1 [] [ text "Bowl" ]
-        , h2 [] [ text "Make New Bowl"]
+        , h2 [] [ text "Make New Bowl" ]
         , text "You can create a bowl for other shibes to get bites out of. Set the total amount, and the bite size for each shibe."
         , div []
-          [ input [ type_ "bowlAmount", placeholder "Bowl Amount", onInput BowlAmount ] []
-          , input [ type_ "biteAmount", placeholder "Bite Amount", onInput BiteAmount ] []
-          , button [ onClick NewBowl ] [ text "New Bowl" ]
-          ]
+            [ input [ type_ "bowlAmount", placeholder "Bowl Amount", onInput BowlAmount ] []
+            , input [ type_ "biteAmount", placeholder "Bite Amount", onInput BiteAmount ] []
+            , button [ onClick NewBowl ] [ text "New Bowl" ]
+            ]
         , h2 [] [ text "Redeem Bowl" ]
         , text "If you know a bowl code, go ahead and try to receive some free doge!"
         , div []
-          [ input [ type_ "bowlCode", placeholder "Bowl Code", onInput BowlCode ] []
-          , button [ onClick RedeemBowl ] [ text "Redeem Bowl" ]
-          ]
+            [ input [ type_ "bowlCode", placeholder "Bowl Code", onInput BowlCode ] []
+            , button [ onClick RedeemBowl ] [ text "Redeem Bowl" ]
+            ]
         ]
 
 
