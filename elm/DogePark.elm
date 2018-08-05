@@ -5,9 +5,15 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onClick)
 import Task
+import Http
+import Json.Decode as Decode
 
 
 -- MODEl
+
+
+type alias Flags =
+     { address : String }
 
 
 type alias Model =
@@ -28,11 +34,11 @@ type alias ShibeLocation =
     { latitude : Float, longitude : Float }
 
 
-init : ( Model, Cmd Msg )
-init =
+init : Flags -> ( Model, Cmd Msg )
+init flags =
     ( { location = Ok Nothing
-      , address = "0x123456789123456789123456789123456789"
-      , balance = 420.4242424242442
+      , address = flags.address
+      , balance = 0
       , withdrawalAddress = ""
       , withdrawalAmount = 0
       , rainAmount = 0
@@ -41,7 +47,9 @@ init =
       , bowlCode = ""
       , biteAmount = 0
       }
-    , Task.attempt UpdateLocation Geolocation.now
+    , Cmd.batch [ Task.attempt UpdateLocation Geolocation.now
+                , getBalance flags.address
+                ]
     )
 
     
@@ -65,6 +73,16 @@ handleLocation model =
             defaultShibeLocation
 
 
+getBalance : String -> Cmd Msg
+getBalance address =
+           Http.send UpdateBalance (Http.get ("/balance?address=" ++ address) decodeBalance)
+
+
+decodeBalance : Decode.Decoder Float
+decodeBalance =
+              Decode.field "balance" Decode.float
+              
+
 -- UPDATE
 
 
@@ -73,6 +91,8 @@ type Msg
     | WithdrawalAddress String
     | WithdrawalAmount String
     | Withdraw
+    | RefreshBalance
+    | UpdateBalance (Result Http.Error Float)
     | RainAmount String
     | RainRadius String
     | SaveLocation
@@ -98,6 +118,15 @@ update msg model =
 
         Withdraw ->
             ( model, Cmd.none )
+
+        RefreshBalance ->
+            ( model, getBalance model.address )
+
+        UpdateBalance (Ok balance) ->
+            ( { model | balance = balance }, Cmd.none )
+
+        UpdateBalance (Err _) ->
+            ( model, Cmd.none)
                 
         RainAmount amount ->
             ( { model | rainAmount = Result.withDefault 0 (String.toFloat amount) }, Cmd.none )
@@ -153,7 +182,10 @@ walletView model =
     div []
         [ h1 [] [ text "Wallet" ]
         , h2 [] [ text ("address: " ++ model.address) ]
-        , h2 [] [ text ("balance: " ++ (toString model.balance) ++ " Ð") ]        
+        , div []
+            [ h2 [] [ text ("balance: " ++ (toString model.balance) ++ " Ð") ]
+            , button [ onClick RefreshBalance ] [ text "Refresh Balance" ]
+            ]
         , input [ type_ "withdrawalAddress", placeholder "Withdrawal Address", onInput WithdrawalAddress ] []
         , input [ type_ "withdrawalAmount", placeholder "Withdrawal Amount", onInput WithdrawalAmount ] []
         , button [ onClick Withdraw ] [ text "Withdraw" ]
@@ -174,12 +206,14 @@ rainView model =
             , button [ onClick Rain ] [ text "Rain" ]
             ]
 
+
 saveLocationView : Html Msg
 saveLocationView =                   
                  div []
                      [ button [ onClick SaveLocation] [ text "Save Location" ]
                      , text "If you want to receive doge from rain events, you have to save your location at least once. "
                      ]
+
 
 bowlView : Model -> Html Msg
 bowlView model =
@@ -199,10 +233,11 @@ bowlView model =
           , button [ onClick RedeemBowl ] [ text "Redeem Bowl" ]
           ]
         ]
-        
-main : Program Never Model Msg
+
+
+main : Program Flags Model Msg
 main =
-    Html.program
+    Html.programWithFlags
         { init = init
         , subscriptions = subscriptions
         , update = update

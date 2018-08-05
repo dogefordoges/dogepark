@@ -1,9 +1,13 @@
 require 'sinatra'
+require 'json'
 
 @@users = {}
+@@accounts = {}
 
 def new_user(username, password)
-  @@users[username] = {:password => password, :balance => 420.424242, :address => "0x123212321232123212324567"}
+  address = "0x123212321232123212324567"
+  @@users[username] = {:password => password, :address => address}
+  @@accounts[address] = {:balance => 420.4242424242}
 end
 
 get '/' do
@@ -44,12 +48,22 @@ get '/dogepark' do
   username = params['username']
   if @@users.has_key? username
     if @@users[username][:signed_in] = true
-      erb :dogepark
+      erb :dogepark, :locals => {:address => @@users[username][:address]}
     else
       redirect "/"
     end
   else
     redirect "/"
+  end
+end
+
+get '/balance' do
+  address = params['address']
+  if @@accounts.has_key? address
+    {:balance => @@accounts[address][:balance]}.to_json
+  else
+    status 500
+    body "Address not found"
   end
 end
 

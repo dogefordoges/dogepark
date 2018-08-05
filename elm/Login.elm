@@ -59,7 +59,7 @@ translateSignedUp model =
 
         _ ->
             ""
-
+                
 
 -- UPDATE
 
