@@ -32,6 +32,7 @@ type alias Model =
     , biteAmount : Float
     , username : String
     , locationMessage : String
+    , password : String
     }
 
 
@@ -52,6 +53,7 @@ init flags =
       , bowlCode = ""
       , biteAmount = 0
       , username = flags.username
+      , password = ""
       , locationMessage = "If you want to receive doge from local rain events, you have to save your current location at least once. "
       }
     , Cmd.batch
@@ -144,6 +146,7 @@ type Msg
     | NewBowl
     | BowlCode String
     | RedeemBowl
+    | Password String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -203,6 +206,9 @@ update msg model =
         RedeemBowl ->
             ( model, Cmd.none )
 
+        Password password ->
+            ( { model | password = password }, Cmd.none )
+
 
 -- SUBSCRIPTION
 
@@ -210,7 +216,6 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.none
-
 
 
 -- VIEW
@@ -284,6 +289,9 @@ bowlView model =
             ]
         ]
 
+passwordView : Html Msg
+passwordView =
+    input [ type_ "password", placeholder "Password", onInput Password ] []
 
 main : Program Flags Model Msg
 main =

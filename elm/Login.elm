@@ -3,7 +3,6 @@ module Login exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
-import Crypto.Hash exposing (sha512)
 
 
 main =
@@ -141,4 +140,4 @@ viewValidation model =
 
 urlParams : String -> String -> String
 urlParams name password =
-    "?username=" ++ (sha512 name) ++ "&password=" ++ (sha512 password)
+    "?username=" ++ name ++ "&password=" ++ password
