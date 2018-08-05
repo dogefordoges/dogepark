@@ -33,6 +33,10 @@ type alias Model =
     , username : String
     , locationMessage : String
     , password : String
+    , withdrawMessage : String
+    , rainMessage : String
+    , bowlMessage : String
+    , redeemMessage : String
     }
 
 
@@ -55,6 +59,10 @@ init flags =
       , username = flags.username
       , password = ""
       , locationMessage = "If you want to receive doge from local rain events, you have to save your current location at least once. "
+      , withdrawMessage = ""
+      , rainMessage = ""
+      , bowlMessage = "You can create a bowl for other shibes to get bites out of. Set the total amount, and the bite size for each shibe."
+      , redeemMessage = "If you know a bowl code, go ahead and try to receive some free doge!"
       }
     , Cmd.batch
         [ Task.attempt UpdateLocation Geolocation.now
@@ -93,9 +101,25 @@ decodeBalance =
     Decode.field "balance" Decode.float
 
 
+withdraw : Model -> Cmd Msg
+withdraw model =
+    Http.send SendWithdraw (Http.post "/withdraw" (Http.jsonBody (encodeWithdrawPost model)) decodeMessage)
+
+
+encodeWithdrawPost : Model -> Encode.Value
+encodeWithdrawPost model =
+        Encode.object
+            [ ( "username", Encode.string model.username )
+            , ( "password", Encode.string model.password )
+            , ( "address", Encode.string model.address )
+            , ( "withdrawAddress", Encode.string model.withdrawalAddress )
+            , ( "amount", Encode.float model.withdrawalAmount )
+            ]
+
+
 persistLocation : Model -> Cmd Msg
 persistLocation model =
-    Http.send PersistLocation (Http.post "/location" (Http.jsonBody (encodeLocationPost model)) decodeLocationMessage)
+    Http.send PersistLocation (Http.post "/location" (Http.jsonBody (encodeLocationPost model)) decodeMessage)
 
 
 encodeLocationPost : Model -> Encode.Value
@@ -106,13 +130,65 @@ encodeLocationPost model =
     in
         Encode.object
             [ ( "latitude", Encode.float l.latitude )
-            , ( "longtiude", Encode.float l.longitude )
+            , ( "longitude", Encode.float l.longitude )
             , ( "username", Encode.string model.username )
+            , ( "password", Encode.string model.password )
             ]
 
 
-decodeLocationMessage : Decode.Decoder String
-decodeLocationMessage =
+sendRain : Model -> Cmd Msg
+sendRain model =
+    Http.send SendRain (Http.post "/rain" (Http.jsonBody (encodeRainPost model)) decodeMessage)
+
+
+encodeRainPost : Model -> Encode.Value
+encodeRainPost model =
+    let
+        l =
+            handleLocation model
+    in
+        Encode.object
+            [ ( "latitude", Encode.float l.latitude )
+            , ( "longitude", Encode.float l.longitude )
+            , ( "username", Encode.string model.username )
+            , ( "password", Encode.string model.password )
+            , ( "address", Encode.string model.address )
+            , ( "amount", Encode.float model.rainAmount )
+            , ( "radius", Encode.float model.rainRadius )
+            ]
+
+
+newBowl : Model -> Cmd Msg
+newBowl model =
+    Http.send NewBowl (Http.post "/bowl" (Http.jsonBody (encodeBowlPost model)) decodeMessage)
+
+
+encodeBowlPost : Model -> Encode.Value
+encodeBowlPost model =
+        Encode.object
+            [ ( "username", Encode.string model.username )
+            , ( "password", Encode.string model.password )
+            , ( "address", Encode.string model.address )
+            , ( "bowlAmount", Encode.float model.bowlAmount )
+            , ( "biteAmount", Encode.float model.biteAmount )
+            ]
+
+
+bite : Model -> Cmd Msg
+bite model =
+    Http.send Bite (Http.post "/bite" (Http.jsonBody (encodeBitePost model)) decodeMessage)
+
+
+encodeBitePost : Model -> Encode.Value
+encodeBitePost model =
+        Encode.object
+            [ ( "address", Encode.string model.address )
+            , ( "bowlCode", Encode.string model.bowlCode )
+            ]
+
+
+decodeMessage : Decode.Decoder String
+decodeMessage =
     Decode.field "message" Decode.string
 
 
@@ -134,6 +210,7 @@ type Msg
     | WithdrawalAddress String
     | WithdrawalAmount String
     | Withdraw
+    | SendWithdraw (Result Http.Error String)
     | RefreshBalance
     | UpdateBalance (Result Http.Error Float)
     | RainAmount String
@@ -141,11 +218,14 @@ type Msg
     | SaveLocation
     | PersistLocation (Result Http.Error String)
     | Rain
+    | SendRain (Result Http.Error String)
     | BowlAmount String
     | BiteAmount String
-    | NewBowl
+    | Bowl
+    | NewBowl (Result Http.Error String)
     | BowlCode String
     | RedeemBowl
+    | Bite (Result Http.Error String)
     | Password String
 
 
@@ -162,7 +242,13 @@ update msg model =
             ( { model | withdrawalAmount = Result.withDefault 0 (String.toFloat amount) }, Cmd.none )
 
         Withdraw ->
-            ( model, Cmd.none )
+            ( model, withdraw model )
+
+        SendWithdraw (Ok message) ->
+            ( { model | withdrawMessage = message }, Cmd.none )
+
+        SendWithdraw (Err error) ->
+            ( { model | withdrawMessage = (errorToString error) }, Cmd.none )
 
         RefreshBalance ->
             ( model, getBalance model.address )
@@ -170,7 +256,7 @@ update msg model =
         UpdateBalance (Ok balance) ->
             ( { model | balance = balance }, Cmd.none )
 
-        UpdateBalance (Err _) ->
+        UpdateBalance (Err error) ->
             ( model, Cmd.none )
 
         RainAmount amount ->
@@ -180,7 +266,13 @@ update msg model =
             ( { model | rainRadius = Result.withDefault 0 (String.toFloat radius) }, Cmd.none )
 
         Rain ->
-            ( model, Cmd.none )
+            ( model, sendRain model )
+
+        SendRain (Ok message) ->
+            ( { model | rainMessage = message }, Cmd.none )
+
+        SendRain (Err error) ->
+            ( { model | rainMessage = (errorToString error) }, Cmd.none )
 
         SaveLocation ->
             ( model, persistLocation model )
@@ -197,14 +289,26 @@ update msg model =
         BiteAmount amount ->
             ( { model | biteAmount = Result.withDefault 0 (String.toFloat amount) }, Cmd.none )
 
-        NewBowl ->
-            ( model, Cmd.none )
+        Bowl ->
+            ( model, newBowl model )
+
+        NewBowl (Ok message) ->
+            ( { model | bowlMessage = message }, Cmd.none )
+
+        NewBowl (Err error) ->
+            ( { model | bowlMessage = (errorToString error) }, Cmd.none)
 
         BowlCode code ->
             ( { model | bowlCode = code }, Cmd.none )
 
         RedeemBowl ->
-            ( model, Cmd.none )
+            ( model, bite model )
+
+        Bite (Ok message) ->
+            ( { model | redeemMessage = message }, Cmd.none )
+
+        Bite (Err error) ->
+            ( { model | redeemMessage = (errorToString error) }, Cmd.none )
 
         Password password ->
             ( { model | password = password }, Cmd.none )
@@ -242,7 +346,9 @@ walletView model =
             ]
         , input [ type_ "withdrawalAddress", placeholder "Withdrawal Address", onInput WithdrawalAddress ] []
         , input [ type_ "withdrawalAmount", placeholder "Withdrawal Amount", onInput WithdrawalAmount ] []
+        , passwordView
         , button [ onClick Withdraw ] [ text "Withdraw" ]
+        , text model.withdrawMessage
         ]
 
 
@@ -259,7 +365,9 @@ rainView model =
             , saveLocationView model
             , input [ type_ "rainAmount", placeholder "Rain Amount", onInput RainAmount ] []
             , input [ type_ "rainRadius", placeholder "Rain Radius", onInput RainRadius ] []
+            , passwordView
             , button [ onClick Rain ] [ text "Rain" ]
+            , text model.rainMessage
             ]
 
 
@@ -270,19 +378,21 @@ saveLocationView model =
         , text model.locationMessage
         ]
 
+
 bowlView : Model -> Html Msg
 bowlView model =
     div []
         [ h1 [] [ text "Bowl" ]
         , h2 [] [ text "Make New Bowl" ]
-        , text "You can create a bowl for other shibes to get bites out of. Set the total amount, and the bite size for each shibe."
+        , text model.bowlMessage
         , div []
             [ input [ type_ "bowlAmount", placeholder "Bowl Amount", onInput BowlAmount ] []
             , input [ type_ "biteAmount", placeholder "Bite Amount", onInput BiteAmount ] []
-            , button [ onClick NewBowl ] [ text "New Bowl" ]
+            , passwordView
+            , button [ onClick Bowl ] [ text "New Bowl" ]
             ]
         , h2 [] [ text "Redeem Bowl" ]
-        , text "If you know a bowl code, go ahead and try to receive some free doge!"
+        , text model.redeemMessage
         , div []
             [ input [ type_ "bowlCode", placeholder "Bowl Code", onInput BowlCode ] []
             , button [ onClick RedeemBowl ] [ text "Redeem Bowl" ]
@@ -291,7 +401,7 @@ bowlView model =
 
 passwordView : Html Msg
 passwordView =
-    input [ type_ "password", placeholder "Password", onInput Password ] []
+             input [ type_ "password", placeholder "Password", onInput Password ] []
 
 main : Program Flags Model Msg
 main =

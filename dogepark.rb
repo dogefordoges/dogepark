@@ -73,7 +73,7 @@ get '/balance' do
 end
 
 def verify_user(username, password, &block)
-  if @@users.hase_key? username
+  if @@users.has_key? username
     if @@users[username][:password] == password
       block.call
     else
@@ -111,7 +111,7 @@ post '/withdraw' do
   amount = payload["amount"]
 
   verify_user(username, password) do
-    {:message => "#{amount} Ð was sent from your account to #{withdraw_address}"}
+    {:message => "#{amount} Ð was sent from your account to #{withdraw_address}"}.to_json
   end
 
 end
@@ -121,11 +121,13 @@ post '/rain' do
   username = payload["username"]
   password = payload["password"]
   address = payload["address"]
+  latitude = payload["latitude"]
+  longitude = payload["longitude"]
   amount = payload["amount"]
   radius = payload["radius"]
 
   verify_user(username, password) do
-    {:message => "You made it rain #{amount} Ð on 20 shibes in a #{radius} km radius"}
+    {:message => "You made it rain #{amount} Ð on 20 shibes in a #{radius} km radius around coordinate #{latitude} lat, #{longitude} long"}.to_json
   end
   
 end
@@ -139,16 +141,16 @@ post '/bowl' do
   bite_amount = payload["biteAmount"]
 
   verify_user(username, password) do
-    {:message => "Here is your new bowl code: 0x123456. Total of #{bowl_amount/bite_amount} bites at #{bite_amount} Ð a piece"}
+    {:message => "Here is your new bowl code: 0x123456. Total of #{bowl_amount/bite_amount} bites at #{bite_amount} Ð a piece"}.to_json
   end
 end
 
-post '/redeem' do
+post '/bite' do
   payload = JSON.parse(request.body.read)
   address = payload["address"]
   bowl_code = payload["bowlCode"]
 
-  {:message => "You got a bite of 20 Ð!"}
+  {:message => "You got a bite of 20 Ð!"}.to_json
 end
 
 not_found do
