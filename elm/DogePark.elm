@@ -17,7 +17,7 @@ type alias Flags =
     { address : String
     , username : String
     }
-    
+
 
 type alias Model =
     { location : Result Geolocation.Error (Maybe Location)
@@ -37,6 +37,7 @@ type alias Model =
     , rainMessage : String
     , bowlMessage : String
     , redeemMessage : String
+    , rainLogs : List String
     }
 
 
@@ -63,10 +64,12 @@ init flags =
       , rainMessage = ""
       , bowlMessage = "You can create a bowl for other shibes to get bites out of. Set the total amount, and the bite size for each shibe."
       , redeemMessage = "If you know a bowl code, go ahead and try to receive some free doge!"
+      , rainLogs = []
       }
     , Cmd.batch
         [ Task.attempt UpdateLocation Geolocation.now
         , getBalance flags.address
+        , getRainLogs flags.username
         ]
     )
 
@@ -101,6 +104,16 @@ decodeBalance =
     Decode.field "balance" Decode.float
 
 
+getRainLogs : String -> Cmd Msg
+getRainLogs username =
+    Http.send UpdateRainLogs (Http.get ("/rainlogs?username=" ++ username) decodeRainLogs)
+
+
+decodeRainLogs : Decode.Decoder (List String)
+decodeRainLogs =
+    Decode.field "rainLogs" (Decode.list Decode.string)
+
+
 withdraw : Model -> Cmd Msg
 withdraw model =
     Http.send SendWithdraw (Http.post "/withdraw" (Http.jsonBody (encodeWithdrawPost model)) decodeMessage)
@@ -108,13 +121,13 @@ withdraw model =
 
 encodeWithdrawPost : Model -> Encode.Value
 encodeWithdrawPost model =
-        Encode.object
-            [ ( "username", Encode.string model.username )
-            , ( "password", Encode.string model.password )
-            , ( "address", Encode.string model.address )
-            , ( "withdrawAddress", Encode.string model.withdrawalAddress )
-            , ( "amount", Encode.float model.withdrawalAmount )
-            ]
+    Encode.object
+        [ ( "username", Encode.string model.username )
+        , ( "password", Encode.string model.password )
+        , ( "address", Encode.string model.address )
+        , ( "withdrawAddress", Encode.string model.withdrawalAddress )
+        , ( "amount", Encode.float model.withdrawalAmount )
+        ]
 
 
 persistLocation : Model -> Cmd Msg
@@ -165,13 +178,13 @@ newBowl model =
 
 encodeBowlPost : Model -> Encode.Value
 encodeBowlPost model =
-        Encode.object
-            [ ( "username", Encode.string model.username )
-            , ( "password", Encode.string model.password )
-            , ( "address", Encode.string model.address )
-            , ( "bowlAmount", Encode.float model.bowlAmount )
-            , ( "biteAmount", Encode.float model.biteAmount )
-            ]
+    Encode.object
+        [ ( "username", Encode.string model.username )
+        , ( "password", Encode.string model.password )
+        , ( "address", Encode.string model.address )
+        , ( "bowlAmount", Encode.float model.bowlAmount )
+        , ( "biteAmount", Encode.float model.biteAmount )
+        ]
 
 
 bite : Model -> Cmd Msg
@@ -181,10 +194,10 @@ bite model =
 
 encodeBitePost : Model -> Encode.Value
 encodeBitePost model =
-        Encode.object
-            [ ( "address", Encode.string model.address )
-            , ( "bowlCode", Encode.string model.bowlCode )
-            ]
+    Encode.object
+        [ ( "address", Encode.string model.address )
+        , ( "bowlCode", Encode.string model.bowlCode )
+        ]
 
 
 decodeMessage : Decode.Decoder String
@@ -219,6 +232,8 @@ type Msg
     | PersistLocation (Result Http.Error String)
     | Rain
     | SendRain (Result Http.Error String)
+    | RefreshRainLogs
+    | UpdateRainLogs (Result Http.Error (List String))
     | BowlAmount String
     | BiteAmount String
     | Bowl
@@ -274,6 +289,15 @@ update msg model =
         SendRain (Err error) ->
             ( { model | rainMessage = (errorToString error) }, Cmd.none )
 
+        RefreshRainLogs ->
+            ( model, getRainLogs model.username )
+
+        UpdateRainLogs (Ok logs) ->
+            ( { model | rainLogs = logs }, Cmd.none )
+
+        UpdateRainLogs (Err _) ->
+            ( model, Cmd.none )
+
         SaveLocation ->
             ( model, persistLocation model )
 
@@ -296,7 +320,7 @@ update msg model =
             ( { model | bowlMessage = message }, getBalance model.address )
 
         NewBowl (Err error) ->
-            ( { model | bowlMessage = (errorToString error) }, Cmd.none)
+            ( { model | bowlMessage = (errorToString error) }, Cmd.none )
 
         BowlCode code ->
             ( { model | bowlCode = code }, Cmd.none )
@@ -314,12 +338,14 @@ update msg model =
             ( { model | password = password }, Cmd.none )
 
 
+
 -- SUBSCRIPTION
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.none
+
 
 
 -- VIEW
@@ -368,7 +394,14 @@ rainView model =
             , passwordView
             , button [ onClick Rain ] [ text "Rain" ]
             , text model.rainMessage
+            , button [ onClick RefreshRainLogs ] [ text "Refresh Rain Logs" ]
+            , div [] (List.map rainLogView model.rainLogs)
             ]
+
+
+rainLogView : String -> Html Msg
+rainLogView log =
+    div [] [ text log ]
 
 
 saveLocationView : Model -> Html Msg
@@ -402,7 +435,8 @@ bowlView model =
 
 passwordView : Html Msg
 passwordView =
-             input [ type_ "password", placeholder "Password", onInput Password ] []
+    input [ type_ "password", placeholder "Password", onInput Password ] []
+
 
 main : Program Flags Model Msg
 main =

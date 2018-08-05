@@ -153,6 +153,15 @@ post '/bite' do
   {:message => "You got a bite of 20 Ð!"}.to_json
 end
 
+get '/rainlogs' do
+  {:rainLogs => [
+     "0x12345678 made it rain in your area! You received 20 Ð!",
+     "0x15432452 made it rain in your area! You received 123456789 Ð!",
+     "0x12346571 made it rain in your area! You received 420 Ð!"
+   ]
+  }.to_json
+end
+
 not_found do
   'This is nowhere to be found.'
 end
