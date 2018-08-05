@@ -17,7 +17,7 @@ type alias Flags =
     { address : String
     , username : String
     }
-
+    
 
 type alias Model =
     { location : Result Geolocation.Error (Maybe Location)
@@ -245,7 +245,7 @@ update msg model =
             ( model, withdraw model )
 
         SendWithdraw (Ok message) ->
-            ( { model | withdrawMessage = message }, Cmd.none )
+            ( { model | withdrawMessage = message }, getBalance model.address )
 
         SendWithdraw (Err error) ->
             ( { model | withdrawMessage = (errorToString error) }, Cmd.none )
@@ -269,7 +269,7 @@ update msg model =
             ( model, sendRain model )
 
         SendRain (Ok message) ->
-            ( { model | rainMessage = message }, Cmd.none )
+            ( { model | rainMessage = message }, getBalance model.address )
 
         SendRain (Err error) ->
             ( { model | rainMessage = (errorToString error) }, Cmd.none )
@@ -293,7 +293,7 @@ update msg model =
             ( model, newBowl model )
 
         NewBowl (Ok message) ->
-            ( { model | bowlMessage = message }, Cmd.none )
+            ( { model | bowlMessage = message }, getBalance model.address )
 
         NewBowl (Err error) ->
             ( { model | bowlMessage = (errorToString error) }, Cmd.none)
@@ -305,7 +305,7 @@ update msg model =
             ( model, bite model )
 
         Bite (Ok message) ->
-            ( { model | redeemMessage = message }, Cmd.none )
+            ( { model | redeemMessage = message }, getBalance model.address )
 
         Bite (Err error) ->
             ( { model | redeemMessage = (errorToString error) }, Cmd.none )
@@ -398,6 +398,7 @@ bowlView model =
             , button [ onClick RedeemBowl ] [ text "Redeem Bowl" ]
             ]
         ]
+
 
 passwordView : Html Msg
 passwordView =
