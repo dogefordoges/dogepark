@@ -166,9 +166,9 @@ end
 get '/bowls' do
   address = params["address"]
   {:bowls => [
-     {:bowlCode => "0x12345678", :bowlAmount => 420},
-     {:bowlCode => "0x12345678", :bowlAmount => 32},
-     {:bowlCode => "0x12345678", :bowlAmount => 98}
+     {:bowlCode => "0x12345678", :bowlAmount => 420.35},
+     {:bowlCode => "0x12345678", :bowlAmount => 32.76},
+     {:bowlCode => "0x12345678", :bowlAmount => 98.98}
    ]
   }.to_json
 end

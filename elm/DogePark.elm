@@ -18,6 +18,8 @@ type alias Flags =
     , username : String
     }
 
+type alias BowlData =
+    { bowlCode: String, bowlAmount: Float }
 
 type alias Model =
     { location : Result Geolocation.Error (Maybe Location)
@@ -38,6 +40,7 @@ type alias Model =
     , bowlMessage : String
     , redeemMessage : String
     , rainLogs : List String
+    , bowls : List BowlData
     }
 
 
@@ -65,11 +68,13 @@ init flags =
       , bowlMessage = "You can create a bowl for other shibes to get bites out of. Set the total amount, and the bite size for each shibe."
       , redeemMessage = "If you know a bowl code, go ahead and try to receive some free doge!"
       , rainLogs = []
+      , bowls = []
       }
     , Cmd.batch
         [ Task.attempt UpdateLocation Geolocation.now
         , getBalance flags.address
         , getRainLogs flags.username
+        , getBowls flags.address
         ]
     )
 
@@ -112,6 +117,16 @@ getRainLogs username =
 decodeRainLogs : Decode.Decoder (List String)
 decodeRainLogs =
     Decode.field "rainLogs" (Decode.list Decode.string)
+
+
+getBowls : String -> Cmd Msg
+getBowls address =
+    Http.send UpdateBowls (Http.get ("/bowls?address=" ++ address) decodeBowls)
+
+
+decodeBowls : Decode.Decoder (List BowlData)
+decodeBowls =
+    Decode.field "bowls" (Decode.list (Decode.map2 BowlData (Decode.field "bowlCode" Decode.string) (Decode.field "bowlAmount" Decode.float)))
 
 
 withdraw : Model -> Cmd Msg
@@ -242,6 +257,7 @@ type Msg
     | RedeemBowl
     | Bite (Result Http.Error String)
     | Password String
+    | UpdateBowls (Result Http.Error (List BowlData))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -337,6 +353,12 @@ update msg model =
         Password password ->
             ( { model | password = password }, Cmd.none )
 
+        UpdateBowls (Ok bowls) ->
+            ( { model | bowls = bowls }, Cmd.none )
+
+        UpdateBowls (Err _) ->
+            ( model, Cmd.none )
+
 
 
 -- SUBSCRIPTION
@@ -430,8 +452,15 @@ bowlView model =
             [ input [ type_ "bowlCode", placeholder "Bowl Code", onInput BowlCode ] []
             , button [ onClick RedeemBowl ] [ text "Redeem Bowl" ]
             ]
+        , div [] (List.map bowlDataView model.bowls)
         ]
 
+bowlDataView : BowlData -> Html Msg
+bowlDataView bowlData =
+             div []
+                 [ text ( "Bowl Code: " ++ bowlData.bowlCode ++ " " )
+                 , text ( "Amount: " ++ (toString bowlData.bowlAmount ) )
+                 ]
 
 passwordView : Html Msg
 passwordView =
