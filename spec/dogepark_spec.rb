@@ -72,10 +72,20 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
     end
 
     it "gets rain logs" do
-      uri = URI(@base + "/rainlogs")
+      uri = URI(@base + "/rainlogs?address=" + @address)
       response = JSON.parse(Net::HTTP.get(uri))
       expect(response.has_key? "rainLogs").to eq true
       expect(response["rainLogs"].class).to eq Array
+    end
+
+    it "gets bowls" do
+      uri = URI(@base + "/bowls?address=" + @address)
+      response = JSON.parse(Net::HTTP.get(uri))
+      expect(response.has_key? "bowls").to eq true
+      expect(response["bowls"].class).to eq Array
+      bowl_data = response["bowls"].first      
+      expect(bowl_data.has_key? "bowlCode").to eq true
+      expect(bowl_data.has_key? "bowlAmount").to eq true
     end
   end
 end

@@ -154,10 +154,21 @@ post '/bite' do
 end
 
 get '/rainlogs' do
+  address = params["address"]
   {:rainLogs => [
      "0x12345678 made it rain in your area! You received 20 Ð!",
      "0x15432452 made it rain in your area! You received 123456789 Ð!",
      "0x12346571 made it rain in your area! You received 420 Ð!"
+   ]
+  }.to_json
+end
+
+get '/bowls' do
+  address = params["address"]
+  {:bowls => [
+     {:bowlCode => "0x12345678", :bowlAmount => 420},
+     {:bowlCode => "0x12345678", :bowlAmount => 32},
+     {:bowlCode => "0x12345678", :bowlAmount => 98}
    ]
   }.to_json
 end
