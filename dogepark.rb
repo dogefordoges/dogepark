@@ -163,5 +163,5 @@ get '/rainlogs' do
 end
 
 not_found do
-  'This is nowhere to be found.'
+  'Oh no! Something went wrong!'
 end
