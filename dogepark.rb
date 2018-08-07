@@ -26,10 +26,10 @@ post '/signin' do
         @@users[username][:signed_in] = true
         {:message => "welcome to dogepark!", :url => "/dogepark?username=#{username}"}.to_json
       else
-        {:message => "password incorrect", :url => ""}.to_json
+        {:message => "password incorrect", :url => "none"}.to_json
       end
     else
-      {:message => "not signed up", :url => ""}.to_json
+      {:message => "not signed up", :url => "none"}.to_json
     end
   else
     halt(404)
@@ -42,7 +42,7 @@ post '/signup' do
   password = payload['password']
   if password && username
     new_user(username, password)
-    {:message => "signed up"}.to_json
+    {:message => "signed up", :url => "none"}.to_json
   else
     halt(404)
   end

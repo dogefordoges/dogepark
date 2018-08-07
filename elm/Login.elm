@@ -6,6 +6,8 @@ import Html.Events exposing (onInput, onClick)
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
+import Navigation
+
 
 main =
     program
@@ -16,12 +18,14 @@ main =
         }
 
 
+
 -- SUBSCRIPTION
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.none
+
 
 
 -- MODEL
@@ -35,6 +39,10 @@ type alias Model =
     , signInPassword : String
     , message : String
     }
+
+
+type alias Response =
+    { message : String, url : String }
 
 
 init : ( Model, Cmd Msg )
@@ -56,38 +64,41 @@ translateSignedUp model =
 
         message ->
             message
-                
+
+
 
 -- UPDATE
 
+
 signUp : Model -> Cmd Msg
 signUp model =
-       Http.send PostSignUp (Http.post "/signup" (Http.jsonBody (encodeSignUp model)) decodeMessage)
+    Http.send PostSignUp (Http.post "/signup" (Http.jsonBody (encodeSignUp model)) decodeResponse)
 
 
 encodeSignUp : Model -> Encode.Value
 encodeSignUp model =
-             Encode.object
-                [ ( "username", Encode.string model.signUpName)
-                , ( "password", Encode.string model.signUpPassword)
-                ]
+    Encode.object
+        [ ( "username", Encode.string model.signUpName )
+        , ( "password", Encode.string model.signUpPassword )
+        ]
+
 
 signIn : Model -> Cmd Msg
 signIn model =
-       Http.send PostSignIn (Http.post "/signin" (Http.jsonBody (encodeSignIn model)) decodeMessage)
+    Http.send PostSignIn (Http.post "/signin" (Http.jsonBody (encodeSignIn model)) decodeResponse)
 
 
 encodeSignIn : Model -> Encode.Value
 encodeSignIn model =
-             Encode.object
-                [ ( "username", Encode.string model.signInName)
-                , ( "password", Encode.string model.signInPassword)
-                ]
+    Encode.object
+        [ ( "username", Encode.string model.signInName )
+        , ( "password", Encode.string model.signInPassword )
+        ]
 
 
-decodeMessage : Decode.Decoder String
-decodeMessage =
-    Decode.field "message" Decode.string
+decodeResponse : Decode.Decoder Response
+decodeResponse =
+    Decode.map2 Response (Decode.field "message" Decode.string) (Decode.field "url" Decode.string)
 
 
 errorToString : Http.Error -> String
@@ -108,8 +119,8 @@ type Msg
     | SignInPassword String
     | SignUp
     | SignIn
-    | PostSignUp (Result Http.Error String)
-    | PostSignIn (Result Http.Error String)
+    | PostSignUp (Result Http.Error Response)
+    | PostSignIn (Result Http.Error Response)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -131,22 +142,33 @@ update msg model =
             ( { model | signInPassword = password }, Cmd.none )
 
         SignUp ->
-            ( model, signUp model )       
+            ( model, signUp model )
 
-        PostSignUp (Ok message) ->
-            ( { model | message = message }, Cmd.none )
+        PostSignUp (Ok response) ->
+            ( { model | message = response.message }, Cmd.none )
 
         PostSignUp (Err error) ->
             ( { model | message = (errorToString error) }, Cmd.none )
 
         SignIn ->
-           ( model, signIn model )
+            ( model, signIn model )
 
-        PostSignIn (Ok message) ->
-            ( { model | message = message }, Cmd.none )
+        PostSignIn (Ok response) ->
+            ( { model | message = response.message }, toDogePark response.url )
 
         PostSignIn (Err error) ->
             ( { model | message = (errorToString error) }, Cmd.none )
+
+
+toDogePark : String -> Cmd Msg
+toDogePark url =
+    case url of
+        "none" ->
+            Cmd.none
+
+        _ ->
+            Navigation.load url
+
 
 
 -- VIEW
