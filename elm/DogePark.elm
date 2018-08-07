@@ -18,8 +18,10 @@ type alias Flags =
     , username : String
     }
 
+
 type alias BowlData =
-    { bowlCode: String, bowlAmount: Float }
+    { bowlCode : String, bowlAmount : Float }
+
 
 type alias Model =
     { location : Result Geolocation.Error (Maybe Location)
@@ -230,6 +232,7 @@ errorToString error =
             "Error"
 
 
+
 -- UPDATE
 
 
@@ -333,7 +336,7 @@ update msg model =
             ( model, newBowl model )
 
         NewBowl (Ok message) ->
-            ( { model | bowlMessage = message }, getBalance model.address )
+            ( { model | bowlMessage = message }, Cmd.batch [ getBalance model.address, getBowls model.address ] )
 
         NewBowl (Err error) ->
             ( { model | bowlMessage = (errorToString error) }, Cmd.none )
@@ -360,14 +363,12 @@ update msg model =
             ( model, Cmd.none )
 
 
-
 -- SUBSCRIPTION
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.none
-
 
 
 -- VIEW
@@ -455,12 +456,14 @@ bowlView model =
         , div [] (List.map bowlDataView model.bowls)
         ]
 
+
 bowlDataView : BowlData -> Html Msg
 bowlDataView bowlData =
-             div []
-                 [ text ( "Bowl Code: " ++ bowlData.bowlCode ++ " " )
-                 , text ( "Amount: " ++ (toString bowlData.bowlAmount ) )
-                 ]
+    div []
+        [ text ("Bowl Code: " ++ bowlData.bowlCode ++ " ")
+        , text ("Amount: " ++ (toString bowlData.bowlAmount))
+        ]
+
 
 passwordView : Html Msg
 passwordView =
