@@ -17,14 +17,19 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
   end
   
   context "Sign up/Sign in" do
-    it "creates a new user" do
-      uri = URI(@base + "/signup?username=hello&password=world")
-      Net::HTTP.get(uri)
+    it "posts new user" do
+      uri = URI(@base + "/signup")
+      payload = {username: "hello", password: "world"}
+      expected_response = {"message" => "signed up"}
+      expect(JSON.parse(post uri, payload)).to eq expected_response
     end
 
-    it "logs in as user" do
-      uri = URI(@base + "/signin?username=hello&password=world")
-      Net::HTTP.get(uri)
+    it "posts signed in user" do
+      uri = URI(@base + "/signup")
+      payload = {username: "hello", password: "world"}
+      post uri, payload
+      #expected_response = {"message" => "You have been signed up! Go ahead and sign in."}
+      #expect(JSON.parse(post uri, payload)).to eq expected_response      
     end
   end
 

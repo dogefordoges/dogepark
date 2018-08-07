@@ -16,31 +16,33 @@ get '/' do
   erb :index, :locals => { :signed_up => "\" \"" }
 end
 
-get '/signin' do
-  username = params['username']
-  password = params['password']
+post '/signin' do
+  payload = JSON.parse(request.body.read)
+  username = payload['username']
+  password = payload['password']
   if password && username
     if @@users.has_key? username
       if @@users[username][:password] == password
         @@users[username][:signed_in] = true
         redirect "/dogepark?username=" + username
       else
-        erb :index, :locals => {:signed_up => "\"password incorrect\""}
+        {:message => "password incorrect"}.to_json
       end
     else
-      erb :index, :locals => {:signed_up => "\"not signed up\""}
+      {:message => "not signed up"}.to_json
     end
   else
     halt(404)
   end
 end
 
-get '/signup' do
-  username = params['username']
-  password = params['password']
+post '/signup' do
+  payload = JSON.parse(request.body.read)
+  username = payload['username']
+  password = payload['password']
   if password && username
     new_user(username, password)
-    erb :index, :locals => {:signed_up => "\"signed up\""}
+    {:message => "signed up"}.to_json
   else
     halt(404)
   end
