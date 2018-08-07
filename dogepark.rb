@@ -41,8 +41,12 @@ post '/signup' do
   username = payload['username']
   password = payload['password']
   if password && username
-    new_user(username, password)
-    {:message => "signed up", :url => "none"}.to_json
+    if @@users.has_key? username
+      {:message => "already signed up", :url => "none"}.to_json
+    else
+      new_user(username, password)
+      {:message => "signed up", :url => "none"}.to_json
+    end
   else
     halt(404)
   end

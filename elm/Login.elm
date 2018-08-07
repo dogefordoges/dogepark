@@ -54,7 +54,10 @@ translateSignedUp : Model -> String
 translateSignedUp model =
     case model.message of
         "signed up" ->
-            "You've been signed up! Go ahead and log in!"
+            "You've been signed up! Go ahead and sign in!"
+
+        "already signed up" ->
+            "That account has already been signed up. Go ahead and sign in!"
 
         "password incorrect" ->
             "The username or password you put in is incorrect, please try again."
@@ -62,8 +65,8 @@ translateSignedUp model =
         "not signed up" ->
             "The username you entered is not registered. Go ahead and sign up to make an account!"
 
-        message ->
-            message
+        _ ->
+            ""
 
 
 
