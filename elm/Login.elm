@@ -2,12 +2,14 @@ module Login exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onInput)
-
+import Html.Events exposing (onInput, onClick)
+import Http
+import Json.Decode as Decode
+import Json.Encode as Encode
 
 main =
-    programWithFlags
-        { init = model
+    program
+        { init = init
         , view = view
         , update = update
         , subscriptions = subscriptions
@@ -25,28 +27,24 @@ subscriptions _ =
 -- MODEL
 
 
-type alias Flags =
-    { signedUp : String }
-
-
 type alias Model =
     { signUpName : String
     , signUpPassword : String
     , signUpPasswordAgain : String
     , signInName : String
     , signInPassword : String
-    , signedUp : String
+    , message : String
     }
 
 
-model : Flags -> ( Model, Cmd Msg )
-model flags =
-    ( Model "" "" "" "" "" flags.signedUp, Cmd.none )
+init : ( Model, Cmd Msg )
+init =
+    ( Model "" "" "" "" "" "", Cmd.none )
 
 
 translateSignedUp : Model -> String
 translateSignedUp model =
-    case model.signedUp of
+    case model.message of
         "signed up" ->
             "You've been signed up! Go ahead and log in!"
 
@@ -62,6 +60,45 @@ translateSignedUp model =
 
 -- UPDATE
 
+signUp : Model -> Cmd Msg
+signUp model =
+       Http.send PostSignUp (Http.post "/signup" (Http.jsonBody (encodeSignUp model)) decodeMessage)
+
+
+encodeSignUp : Model -> Encode.Value
+encodeSignUp model =
+             Encode.object
+                [ ( "username", Encode.string model.signUpName)
+                , ( "password", Encode.string model.signUpPassword)
+                ]
+
+signIn : Model -> Cmd Msg
+signIn model =
+       Http.send PostSignIn (Http.post "/signin" (Http.jsonBody (encodeSignIn model)) decodeMessage)
+
+
+encodeSignIn : Model -> Encode.Value
+encodeSignIn model =
+             Encode.object
+                [ ( "username", Encode.string model.signInName)
+                , ( "password", Encode.string model.signInPassword)
+                ]
+
+
+decodeMessage : Decode.Decoder String
+decodeMessage =
+    Decode.field "message" Decode.string
+
+
+errorToString : Http.Error -> String
+errorToString error =
+    case error of
+        Http.BadStatus e ->
+            ("Error: " ++ (toString e.status.code) ++ " " ++ e.body)
+
+        _ ->
+            "Error"
+
 
 type Msg
     = SignUpName String
@@ -69,6 +106,10 @@ type Msg
     | SignUpPasswordAgain String
     | SignInName String
     | SignInPassword String
+    | SignUp
+    | SignIn
+    | PostSignUp (Result Http.Error String)
+    | PostSignIn (Result Http.Error String)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -89,6 +130,24 @@ update msg model =
         SignInPassword password ->
             ( { model | signInPassword = password }, Cmd.none )
 
+        SignUp ->
+            ( model, signUp model )       
+
+        PostSignUp (Ok message) ->
+            ( { model | message = message }, Cmd.none )
+
+        PostSignUp (Err error) ->
+            ( { model | message = (errorToString error) }, Cmd.none )
+
+        SignIn ->
+           ( model, signIn model )
+
+        PostSignIn (Ok message) ->
+            ( { model | message = message }, Cmd.none )
+
+        PostSignIn (Err error) ->
+            ( { model | message = (errorToString error) }, Cmd.none )
+
 
 -- VIEW
 
@@ -108,7 +167,7 @@ signInView model =
         [ h2 [] [ text "Sign In" ]
         , input [ type_ "text", placeholder "Name", onInput SignInName ] []
         , input [ type_ "password", placeholder "Password", onInput SignInPassword ] []
-        , a [ href ("/signin" ++ (urlParams model.signInName model.signInPassword)) ] [ text "Sign In" ]
+        , button [ onClick SignIn ] [ text "Sign In" ]
         ]
 
 
@@ -119,7 +178,7 @@ signUpView model =
         , input [ type_ "text", placeholder "Name", onInput SignUpName ] []
         , input [ type_ "password", placeholder "Password", onInput SignUpPassword ] []
         , input [ type_ "password", placeholder "Re-enter Password", onInput SignUpPasswordAgain ] []
-        , a [ href ("/signup" ++ (urlParams model.signUpName model.signUpPassword)) ] [ text "Sign Up" ]
+        , button [ onClick SignUp ] [ text "Sign Up" ]
         , viewValidation model
         ]
 
