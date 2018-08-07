@@ -24,6 +24,30 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
       expect(JSON.parse(post uri, payload)).to eq expected_response
     end
 
+    it "posts incorrect username" do
+      uri = URI(@base + "/signin")
+      payload = {username: "hell0", password: "world"}
+      post uri, payload
+      expected_response = {"message" => "not signed up"}
+      expect(JSON.parse(post uri, payload)).to eq expected_response      
+    end    
+
+    it "posts incorrect password" do
+      uri = URI(@base + "/signin")
+      payload = {username: "hello", password: "world!"}
+      post uri, payload
+      expected_response = {"message" => "password incorrect"}
+      expect(JSON.parse(post uri, payload)).to eq expected_response      
+    end
+
+    it "posts signed in user" do
+      uri = URI(@base + "/signup")
+      payload = {username: "hello", password: "world"}
+      post uri, payload
+      #expected_response = {"message" => "You have been signed up! Go ahead and sign in."}
+      #expect(JSON.parse(post uri, payload)).to eq expected_response      
+    end    
+
     it "posts signed in user" do
       uri = URI(@base + "/signup")
       payload = {username: "hello", password: "world"}
