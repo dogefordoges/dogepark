@@ -28,7 +28,7 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
       uri = URI(@base + "/signin")
       payload = {username: "hell0", password: "world"}
       post uri, payload
-      expected_response = {"message" => "not signed up"}
+      expected_response = {"message" => "not signed up", "url" => ""}
       expect(JSON.parse(post(uri, payload).body)).to eq expected_response      
     end    
 
@@ -36,14 +36,15 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
       uri = URI(@base + "/signin")
       payload = {username: "hello", password: "world!"}
       post uri, payload
-      expected_response = {"message" => "password incorrect"}
+      expected_response = {"message" => "password incorrect", "url" => ""}
       expect(JSON.parse(post(uri, payload).body)).to eq expected_response      
     end
 
     it "posts signed in user" do
-      uri = URI(@base + "/signup")
+      uri = URI(@base + "/signin")
       payload = {username: "hello", password: "world"}
-      expect(post(uri, payload).code).to eq "200"
+      expected_response = {"message" => "welcome to dogepark!", "url" => "/dogepark?username=hello"}
+      expect(JSON.parse(post(uri, payload).body)).to eq expected_response
     end    
 
   end

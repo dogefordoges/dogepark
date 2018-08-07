@@ -24,12 +24,12 @@ post '/signin' do
     if @@users.has_key? username
       if @@users[username][:password] == password
         @@users[username][:signed_in] = true
-        redirect "/dogepark?username=" + username
+        {:message => "welcome to dogepark!", :url => "/dogepark?username=#{username}"}.to_json
       else
-        {:message => "password incorrect"}.to_json
+        {:message => "password incorrect", :url => ""}.to_json
       end
     else
-      {:message => "not signed up"}.to_json
+      {:message => "not signed up", :url => ""}.to_json
     end
   else
     halt(404)

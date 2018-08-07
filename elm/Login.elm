@@ -54,8 +54,8 @@ translateSignedUp model =
         "not signed up" ->
             "The username you entered is not registered. Go ahead and sign up to make an account!"
 
-        _ ->
-            ""
+        message ->
+            message
                 
 
 -- UPDATE
@@ -97,7 +97,7 @@ errorToString error =
             ("Error: " ++ (toString e.status.code) ++ " " ++ e.body)
 
         _ ->
-            "Error"
+            (toString error)
 
 
 type Msg
