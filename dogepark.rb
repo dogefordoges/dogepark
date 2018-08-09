@@ -51,7 +51,7 @@ post '/signin' do
       if @@users[username][:password] == password
         @@users[username][:signed_in] = true
         token = gen_jwt_token("signed_in")
-        {:message => "welcome to dogepark!", :url => "/dogepark?username=#{username}&?token=#{token}", :token => token}.to_json
+        {:message => "welcome to dogepark!", :url => "/dogepark?username=#{username}&token=#{token}", :token => token}.to_json
       else
         {:message => "password incorrect", :url => "none"}.to_json
       end
@@ -87,7 +87,8 @@ get '/dogepark' do
       if valid_token? token
         erb :dogepark, :locals => {
               :address => @@users[username][:address],
-              :username => username
+              :username => username,
+              :token => token
             }
       else
         redirect "/"

@@ -16,6 +16,7 @@ import Json.Encode as Encode
 type alias Flags =
     { address : String
     , username : String
+    , token : String
     }
 
 
@@ -43,6 +44,7 @@ type alias Model =
     , redeemMessage : String
     , rainLogs : List String
     , bowls : List BowlData
+    , token : String
     }
 
 
@@ -71,12 +73,13 @@ init flags =
       , redeemMessage = "If you know a bowl code, go ahead and try to receive some free doge!"
       , rainLogs = []
       , bowls = []
+      , token = flags.token
       }
     , Cmd.batch
         [ Task.attempt UpdateLocation Geolocation.now
-        , getBalance flags.address
-        , getRainLogs flags.username
-        , getBowls flags.address
+        , getBalance flags.address flags.token
+        , getRainLogs flags.username flags.token
+        , getBowls flags.address flags.token
         ]
     )
 
@@ -101,9 +104,9 @@ handleLocation model =
             defaultShibeLocation
 
 
-getBalance : String -> Cmd Msg
-getBalance address =
-    Http.send UpdateBalance (Http.get ("/balance?address=" ++ address) decodeBalance)
+getBalance : String -> String -> Cmd Msg
+getBalance address token =
+    Http.send UpdateBalance (Http.get ("/balance?address=" ++ address ++ "&token=" ++ token ) decodeBalance)
 
 
 decodeBalance : Decode.Decoder Float
@@ -111,9 +114,9 @@ decodeBalance =
     Decode.field "balance" Decode.float
 
 
-getRainLogs : String -> Cmd Msg
-getRainLogs username =
-    Http.send UpdateRainLogs (Http.get ("/rainlogs?username=" ++ username) decodeRainLogs)
+getRainLogs : String -> String -> Cmd Msg
+getRainLogs username token =
+    Http.send UpdateRainLogs (Http.get ("/rainlogs?username=" ++ username ++ "&token=" ++ token) decodeRainLogs)
 
 
 decodeRainLogs : Decode.Decoder (List String)
@@ -121,9 +124,9 @@ decodeRainLogs =
     Decode.field "rainLogs" (Decode.list Decode.string)
 
 
-getBowls : String -> Cmd Msg
-getBowls address =
-    Http.send UpdateBowls (Http.get ("/bowls?address=" ++ address) decodeBowls)
+getBowls : String -> String -> Cmd Msg
+getBowls address token =
+    Http.send UpdateBowls (Http.get ("/bowls?address=" ++ address ++ "&token=" ++ token) decodeBowls)
 
 
 decodeBowls : Decode.Decoder (List BowlData)
@@ -144,6 +147,7 @@ encodeWithdrawPost model =
         , ( "address", Encode.string model.address )
         , ( "withdrawAddress", Encode.string model.withdrawalAddress )
         , ( "amount", Encode.float model.withdrawalAmount )
+        , ( "token", Encode.string model.token )
         ]
 
 
@@ -163,6 +167,7 @@ encodeLocationPost model =
             , ( "longitude", Encode.float l.longitude )
             , ( "username", Encode.string model.username )
             , ( "password", Encode.string model.password )
+            , ( "token", Encode.string model.token )
             ]
 
 
@@ -185,6 +190,7 @@ encodeRainPost model =
             , ( "address", Encode.string model.address )
             , ( "amount", Encode.float model.rainAmount )
             , ( "radius", Encode.float model.rainRadius )
+            , ( "token", Encode.string model.token )
             ]
 
 
@@ -201,6 +207,7 @@ encodeBowlPost model =
         , ( "address", Encode.string model.address )
         , ( "bowlAmount", Encode.float model.bowlAmount )
         , ( "biteAmount", Encode.float model.biteAmount )
+        , ( "token", Encode.string model.token )
         ]
 
 
@@ -214,6 +221,7 @@ encodeBitePost model =
     Encode.object
         [ ( "address", Encode.string model.address )
         , ( "bowlCode", Encode.string model.bowlCode )
+        , ( "token", Encode.string model.token )
         ]
 
 
@@ -279,13 +287,13 @@ update msg model =
             ( model, withdraw model )
 
         SendWithdraw (Ok message) ->
-            ( { model | withdrawMessage = message }, getBalance model.address )
+            ( { model | withdrawMessage = message }, getBalance model.address model.token )
 
         SendWithdraw (Err error) ->
             ( { model | withdrawMessage = (errorToString error) }, Cmd.none )
 
         RefreshBalance ->
-            ( model, getBalance model.address )
+            ( model, getBalance model.address model.token )
 
         UpdateBalance (Ok balance) ->
             ( { model | balance = balance }, Cmd.none )
@@ -303,13 +311,13 @@ update msg model =
             ( model, sendRain model )
 
         SendRain (Ok message) ->
-            ( { model | rainMessage = message }, getBalance model.address )
+            ( { model | rainMessage = message }, getBalance model.address model.token )
 
         SendRain (Err error) ->
             ( { model | rainMessage = (errorToString error) }, Cmd.none )
 
         RefreshRainLogs ->
-            ( model, getRainLogs model.username )
+            ( model, getRainLogs model.username model.token )
 
         UpdateRainLogs (Ok logs) ->
             ( { model | rainLogs = logs }, Cmd.none )
@@ -336,7 +344,7 @@ update msg model =
             ( model, newBowl model )
 
         NewBowl (Ok message) ->
-            ( { model | bowlMessage = message }, Cmd.batch [ getBalance model.address, getBowls model.address ] )
+            ( { model | bowlMessage = message }, Cmd.batch [ (getBalance model.address model.token), (getBowls model.address model.token) ] )
 
         NewBowl (Err error) ->
             ( { model | bowlMessage = (errorToString error) }, Cmd.none )
@@ -348,7 +356,7 @@ update msg model =
             ( model, bite model )
 
         Bite (Ok message) ->
-            ( { model | redeemMessage = message }, getBalance model.address )
+            ( { model | redeemMessage = message }, getBalance model.address model.token )
 
         Bite (Err error) ->
             ( { model | redeemMessage = (errorToString error) }, Cmd.none )
