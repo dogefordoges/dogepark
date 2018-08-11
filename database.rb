@@ -76,6 +76,7 @@ class Database
     @db[:rain_logs].where(user_id: user_id)
   end
 
+  #For testing
   def query(query)
     @db[query]
   end

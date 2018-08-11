@@ -1,6 +1,7 @@
 # coding: utf-8
 require 'net/http'
 require 'json'
+require './database'
 
 def post(uri, json_data)
   req = Net::HTTP::Post.new(uri, 'Content-Type' => 'application/json')
@@ -11,9 +12,19 @@ end
 
 RSpec.describe Net::HTTP, "Dogepark Server Tests" do
   
-  before(:example) do
-    @base = "http://localhost:4567"
+  before(:all) do
+    @base = "http://localhost:9292"
     @address = "0x123212321232123212324567"
+    @db = Database.new
+    @db.create_users
+    @db.create_bowls
+    @db.create_rain_logs
+  end
+
+  after(:all) do
+    @db.drop_bowls
+    @db.drop_rain_logs
+    @db.drop_users
   end
   
   context "Sign up/Sign in" do
