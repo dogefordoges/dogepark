@@ -33,9 +33,10 @@ class Database
   def create_bowls
     @db.create_table :bowls do
       primary_key :id
-      String code
-      Float total
-      Float bite_size
+      foreign_key :user_id, :users, unique: true
+      String :code, null: false
+      Float :total, null: false
+      Float :bite_size, null: false
     end
   end
 
@@ -47,14 +48,15 @@ class Database
     @db[:bowls].insert(bowl)
   end
 
-  def get_bowls(code)
-    @db[:bowls].all
+  def get_bowls(user_id)
+    @db[:bowls].where(user_id: user_id)
   end
 
-  def create_rain_logs(user)
+  def create_rain_logs
     @db.create_table :rain_logs do
       primary_key :id
-      String :log
+      foreign_key :user_id, :users, unique: true
+      String :log, null: false
     end
   end
 
@@ -66,8 +68,8 @@ class Database
     @db[:rain_logs].insert(log)
   end
 
-  def get_rain_logs(user)
-    @db[:rain_logs].all
+  def get_rain_logs(user_id)
+    @db[:rain_logs].where(user_id: user_id)
   end
 
   def query(query)
