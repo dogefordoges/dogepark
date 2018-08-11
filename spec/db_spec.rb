@@ -42,6 +42,14 @@ RSpec.describe Database, "Dogepark Postgres DB Unit Tests" do
       expect(user[:public_key])
       expect(user[:private_key])
     end
+
+    it "updates users location" do
+      @db.update_location("hello", {latitude: 42.42, longitude: 42.42})
+
+      user = @db.get_user("hello")
+      expect(user[:latitude]).to eq 42.42
+      expect(user[:longitude]).to eq 42.42
+    end
     
   end
 

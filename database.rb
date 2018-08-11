@@ -30,6 +30,10 @@ class Database
     @db[:users].where(name: name).first
   end
 
+  def update_location(name, location)
+    @db[:users].where(name: name).update(location)
+  end
+
   def create_bowls
     @db.create_table :bowls do
       primary_key :id
