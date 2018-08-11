@@ -9,7 +9,7 @@ class Database
   def create_users
     @db.create_table :users do
       primary_key :id
-      String :name, null: false
+      String :name, null: false, unique: true
       String :password, null: false
       Float :latitude, default: 0
       Float :longitude, default: 0
