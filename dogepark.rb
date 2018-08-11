@@ -6,6 +6,7 @@ require 'jwt'
 @@users = {}
 @@accounts = {}
 @@bowls = {}
+@@rain_logs = {}
 
 @@hmac_secret = "foobar"
 

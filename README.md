@@ -4,6 +4,13 @@ Interactive web based wallet with other gadgets for Dogecoin. Inspired by http:/
 
 # Installation
 
+Installation instructions for Ubuntu only
+```
+sudo apt-get install libpq-dev #For pg dependency
+gem install bundler
+bundle install
+```
+
 ## Elm dependency
 
 You will need to install elm
@@ -11,9 +18,13 @@ You will need to install elm
 
 Then do `elm-package install`
 
-## Ruby Dependencies
-`bundle install`
-
 # Usage
 
-Start by compiling the Elm files into js with `ruby compile_elm.rb`, then run `ruby dogepark.rb`. 
+Start by compiling the Elm files into js with `ruby compile_elm.rb`, then run `ruby dogepark.rb`.
+
+# Test
+
+Run tests with rspec
+```
+rspec --format doc
+```
