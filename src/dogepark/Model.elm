@@ -38,6 +38,7 @@ type alias Model =
     , rainLogs : List String
     , bowls : List BowlData
     , token : String
+    , price : Float
     }
 
 
@@ -70,6 +71,7 @@ type Msg
     | Bite (Result Http.Error String)
     | Password String
     | UpdateBowls (Result Http.Error (List BowlData))
+    | Price (Result Http.Error CryptonatorResult)
 
       
 init : Flags -> ( Model, Cmd Msg )
@@ -94,12 +96,14 @@ init flags =
       , rainLogs = []
       , bowls = []
       , token = flags.token
+      , price = 0
       }
     , Cmd.batch
         [ Task.attempt UpdateLocation Geolocation.now
         , getBalance flags.address flags.token
         , getRainLogs flags.username flags.token
         , getBowls flags.address flags.token
+        , getDogePrice
         ]
     )
 
@@ -255,5 +259,44 @@ errorToString error =
         Http.BadStatus e ->
             ("Error: " ++ (toString e.status.code) ++ " " ++ e.body)
 
-        _ ->
-            "Error"
+        message ->
+            (toString message)
+
+-- Cryptonator API
+-- https://api.cryptonator.com/api/ticker/doge-usd
+
+type alias CryptonatorTicker =
+     { base : String
+     , target : String
+     , price : String
+     , volume : String
+     , change : String
+     }
+
+type alias CryptonatorResult =
+     { ticker : CryptonatorTicker
+     , timestamp : Int
+     , success : Bool
+     , error : String
+     }
+
+getDogePrice : Cmd Msg
+getDogePrice =
+             Http.send Price (Http.get "https://api.cryptonator.com/api/ticker/doge-usd" decodeCryptonatorResult)
+
+decodeCryptonatorTicker : Decode.Decoder CryptonatorTicker
+decodeCryptonatorTicker =
+                        Decode.map5 CryptonatorTicker
+                                ( Decode.field "base" Decode.string )
+                                ( Decode.field "target" Decode.string )
+                                ( Decode.field "price" Decode.string )
+                                ( Decode.field "volume" Decode.string )
+                                ( Decode.field "change" Decode.string )
+
+decodeCryptonatorResult : Decode.Decoder CryptonatorResult
+decodeCryptonatorResult =
+                        Decode.map4 CryptonatorResult
+                                ( Decode.field "ticker" decodeCryptonatorTicker )
+                                ( Decode.field "timestamp" Decode.int )
+                                ( Decode.field "success" Decode.bool )
+                                ( Decode.field "error" Decode.string )

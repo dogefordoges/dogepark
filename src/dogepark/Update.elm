@@ -100,3 +100,9 @@ update msg model =
 
         UpdateBowls (Err _) ->
             ( model, Cmd.none )
+
+        Price (Ok cryptonatorResult) ->
+            ( { model | price = (Result.withDefault 0 (String.toFloat cryptonatorResult.ticker.price)) }, Cmd.none )
+
+        Price (Err error) ->
+            ( model, Cmd.none )

@@ -19,6 +19,7 @@ walletView : Model -> Html Msg
 walletView model =
     div []
         [ h1 [] [ text "Wallet" ]
+        , h2 [] [ text ("1 Ð = $" ++ (toString model.price)) ]
         , h2 [] [ text ("address: " ++ model.address) ]
         , div []
             [ h2 [] [ text ("balance: " ++ (toString model.balance) ++ " Ð") ]
