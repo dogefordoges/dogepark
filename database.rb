@@ -13,8 +13,8 @@ class Database
       String :password, null: false
       Float :latitude, default: 0
       Float :longitude, default: 0
-      String :public_key, null: false
-      String :private_key, null: false
+      String :public_key, null: false, unique: true
+      String :private_key, null: false, unique: true
     end
   end
 
@@ -32,6 +32,57 @@ class Database
 
   def update_location(name, location)
     @db[:users].where(name: name).update(location)
+  end
+
+  def min_max_latitude(latitude, km)
+    # 69 km = 1 degree latitude
+    min = latitude - (km/69.0)
+    max = latitude + (km/69.0)
+
+    if min < -90
+      min = (min * -1) - 90
+    elsif min > 90
+      min = (min * -1) + 90
+    end
+
+    if max < -90
+      max = (max * -1) + 90
+    elsif max > 90
+      max = (max * -1) - 90
+    end
+
+    {min: min, max: max}
+  end
+
+  # Always -30, 30 degrees for simplified implementation
+  def min_max_longitude(longitude)
+    min = longitude - 30
+    max = longitude + 30
+
+    if min < -180
+      min = (min * -1) - 180
+    elsif min > 180
+      min = (min * -1) + 180
+    end
+
+    if max < -180
+      max = (max * -1) - 180
+    elsif max > 180
+      max = (max * -1) + 180
+    end
+
+    {min: min, max: max}
+  end
+
+  def where_min_max(id, min_max_lat, min_max_long)        
+    Sequel.lit("(latitude > ?) AND (latitude < ?) AND (longitude > ?) AND (longitude < ?) AND (id != ?)", min_max_lat[:min], min_max_lat[:max], min_max_long[:min], min_max_long[:max], id)
+  end
+
+  # For now returns users in the given latitude
+  def get_users_in_radius(id, location, radius)
+    min_max_lat = min_max_latitude(location[:latitude], radius)
+    min_max_long = min_max_longitude(location[:longitude])
+    @db[:users].where(where_min_max(id, min_max_lat, min_max_long))
   end
 
   def create_bowls
