@@ -114,7 +114,7 @@ RSpec.describe Database, "Dogepark Postgres DB Unit Tests" do
 
     it "inserts a rain log" do
       user = @db.get_user("hello")
-      @db.insert_rain_log({user_id: user[:id], log: "foo"})
+      @db.insert_rain_log(user[:id], "foo")
     end
 
     it "gets rain logs" do

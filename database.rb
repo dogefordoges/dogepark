@@ -72,8 +72,8 @@ class Database
     @db.run("drop table rain_logs")
   end
 
-  def insert_rain_log(log)
-    @db[:rain_logs].insert(log)
+  def insert_rain_log(user_id, log)
+    @db[:rain_logs].insert({user_id: user_id, log: log})
   end
 
   def get_rain_logs(user_id)

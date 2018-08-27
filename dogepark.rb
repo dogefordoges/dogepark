@@ -210,7 +210,9 @@ class DogeParkApp < Sinatra::Base
       verify_user(username, password) do
         user = @db.get_user(username)
         users = nearby_users(user[:id], {latitude: user[:latitude], longitude: user[:longitude]}, radius)
-        {:message => "You made it rain #{amount} Ð on #{users.count} shibes in a #{radius} km radius around your saved location #{user[:latitude]} lat, #{user[:longitude]} long"}.to_json
+        log = "You made it rain #{amount} Ð on #{users.count} shibes in a #{radius} km radius around your saved location #{user[:latitude]} lat, #{user[:longitude]} long"
+        #TODO: insert rain logs for every selected user        
+        {:message => log}.to_json
       end
     end
     
