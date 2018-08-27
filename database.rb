@@ -35,7 +35,7 @@ class Database
   end
 
   def get_users_locations
-    @db[:users].map([:id, :latitude, :longitude])
+    @db[:users].select(:id, :latitude, :longitude)
   end
 
   def create_bowls

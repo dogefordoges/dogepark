@@ -55,14 +55,12 @@ RSpec.describe Database, "Dogepark Postgres DB Unit Tests" do
       @db.insert_user({name: "hezzo", password: "w0rld", public_key: "fooz", private_key: "barz", latitude: 43, longitude: 43})
     end
 
-    it "gets all users in radius of old user" do
-      user = @db.get_user("hello")
-      users = @db.get_users_in_radius(user[:id], {latitude: user[:latitude], longitude: user[:longitude]}, 100)
-
-      user2 = @db.get_user("hezzo")
-      
-      expect(users.count).to eq 1
-      expect(users.first).to eq user2
+    it "gets all users locations" do
+      user_locations = @db.get_users_locations
+      loc = user_locations.first
+      expect(loc[:id])
+      expect(loc[:latitude])
+      expect(loc[:longitude])
     end
     
   end
