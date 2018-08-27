@@ -62,7 +62,11 @@ RSpec.describe Database, "Dogepark Postgres DB Unit Tests" do
       expect(loc[:latitude])
       expect(loc[:longitude])
     end
-    
+
+    it "gets user by public key" do
+      user = @db.get_user_by_public_key("foo")
+      expect(user[:name]).to eq "hello"
+    end
   end
 
   context 'creates bowls table and inserts a new bowl' do
@@ -91,11 +95,10 @@ RSpec.describe Database, "Dogepark Postgres DB Unit Tests" do
       expect(bowls.count > 0)
 
       bowl = bowls.first
-      expect(bowl[:id])
-      expect(bowl[:user_id]).to eq user[:id]
       expect(bowl[:code]).to eq "foo"
       expect(bowl[:total]).to eq 100
       expect(bowl[:bite_size]).to eq 10
+      expect(bowl.keys).to eq [:code, :total, :bite_size]
     end
     
   end
@@ -124,9 +127,8 @@ RSpec.describe Database, "Dogepark Postgres DB Unit Tests" do
       expect(logs.count > 0)
 
       log = logs.first
-      expect(log[:id])
-      expect(log[:user_id]).to eq user[:id]
       expect(log[:log]).to eq "foo"
+      expect(log.keys).to eq [:log]
     end
     
   end

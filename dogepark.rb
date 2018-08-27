@@ -6,6 +6,7 @@ require './database'
 require 'geocoder'
 
 Geocoder.configure(:units => :km)
+Sequel::Model.plugin :json_serializer
 
 class DogeParkApp < Sinatra::Base
 
@@ -20,7 +21,7 @@ class DogeParkApp < Sinatra::Base
   
   def new_user(username, password)
     address = "0x123212321232123212324567"
-    @db.insert_user({name: username, password: password, public_key: "foo", private_key: "bar"})
+    @db.insert_user({name: username, password: password, public_key: address, private_key: "bar"})
     @accounts[address] = {:balance => 420.4242424242}
   end
 
@@ -248,29 +249,21 @@ class DogeParkApp < Sinatra::Base
 
   get '/rainlogs' do
     address = params["address"]
-    token = params["token"]
+    token = params["token"]    
 
     verify_token(token) do
-      {:rainLogs => [
-         "0x12345678 made it rain in your area! You received 20 Ð!",
-         "0x15432452 made it rain in your area! You received 123456789 Ð!",
-         "0x12346571 made it rain in your area! You received 420 Ð!"
-       ]
-      }.to_json
+      user = @db.get_user_by_public_key(address)
+      {rainLogs: dataset_to_array(@db.get_rain_logs(user[:id]))}.to_json
     end
   end
 
   get '/bowls' do
     address = params["address"]
-    token = params["token"]
+    token = params["token"]    
     
     verify_token(token) do
-      {:bowls => [
-         {:bowlCode => "0x12345678", :bowlAmount => 420.35},
-         {:bowlCode => "0x12345678", :bowlAmount => 32.76},
-         {:bowlCode => "0x12345678", :bowlAmount => 98.98}
-       ]
-      }.to_json
+      user = @db.get_user_by_public_key(address)
+      {bowls: dataset_to_array(@db.get_bowls(user[:id]))}.to_json
     end
   end
 

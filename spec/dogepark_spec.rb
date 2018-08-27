@@ -144,6 +144,8 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
       response = JSON.parse(Net::HTTP.get(uri))
       expect(response.has_key? "rainLogs").to eq true
       expect(response["rainLogs"].class).to eq Array
+      expect(response["rainLogs"].length > 0).to eq true
+      expect(response["rainLogs"].first.keys).to eq [:keys]
     end
 
     it "gets bowls" do
@@ -151,9 +153,9 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
       response = JSON.parse(Net::HTTP.get(uri))
       expect(response.has_key? "bowls").to eq true
       expect(response["bowls"].class).to eq Array
+      expect(response["bowls"].length > 0).to eq true
       bowl_data = response["bowls"].first      
-      expect(bowl_data.has_key? "bowlCode").to eq true
-      expect(bowl_data.has_key? "bowlAmount").to eq true
+      expect(bowl_data.keys).to eq [:code, :total, :bite_size]
     end
   end
 end

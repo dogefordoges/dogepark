@@ -30,6 +30,10 @@ class Database
     @db[:users].where(name: name).first
   end
 
+  def get_user_by_public_key(public_key)
+    @db[:users].where(public_key: public_key).first
+  end
+
   def update_location(name, location)
     @db[:users].where(name: name).update(location)
   end
@@ -57,7 +61,7 @@ class Database
   end
 
   def get_bowls(user_id)
-    @db[:bowls].where(user_id: user_id)
+    @db[:bowls].select(:code, :total, :bite_size).where(user_id: user_id)
   end
 
   def create_rain_logs
@@ -77,7 +81,7 @@ class Database
   end
 
   def get_rain_logs(user_id)
-    @db[:rain_logs].where(user_id: user_id)
+    @db[:rain_logs].select(:log).where(user_id: user_id)
   end
 
   #For testing
