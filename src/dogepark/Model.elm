@@ -206,9 +206,7 @@ encodeRainPost model =
             handleLocation model
     in
         Encode.object
-            [ ( "latitude", Encode.float l.latitude )
-            , ( "longitude", Encode.float l.longitude )
-            , ( "username", Encode.string model.username )
+            [ ( "username", Encode.string model.username )
             , ( "password", Encode.string model.password )
             , ( "address", Encode.string model.address )
             , ( "amount", Encode.float model.rainAmount )

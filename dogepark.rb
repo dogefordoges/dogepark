@@ -180,20 +180,34 @@ class DogeParkApp < Sinatra::Base
 
   end
 
+  def km_between(coord, coord2)
+    Geocoder::Calculations.distance_between(
+      [coord[:latitude], coord[:longitude]],
+      [coord2[:latitude], coord2[:longitude]]
+    )
+  end
+
+  def nearby_users(id, center, radius)
+    @db.get_users_locations.select do |user_location|
+      km_between(center, user_location) < radius && user_location[:id] != id
+    end
+  end
+
   post '/rain' do
     payload = JSON.parse(request.body.read)
+    
     username = payload["username"]
     password = payload["password"]
     address = payload["address"]
-    latitude = payload["latitude"]
-    longitude = payload["longitude"]
     amount = payload["amount"]
     radius = payload["radius"]
     token = payload["token"]
 
     verify_token(token) do
       verify_user(username, password) do
-        {:message => "You made it rain #{amount} Ð on 20 shibes in a #{radius} km radius around coordinate #{latitude} lat, #{longitude} long"}.to_json
+        user = get_user(username)
+        users = nearby_users(user[:id], {latitude: user, longitude: user[:longitude]}, radius)
+        {:message => "You made it rain #{amount} Ð on #{users.length} shibes in a #{radius} km radius around your saved location #{user[:latitude]} lat, #{user[:longitude]} long"}.to_json
       end
     end
     
