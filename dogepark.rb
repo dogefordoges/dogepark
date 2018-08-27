@@ -3,6 +3,9 @@ require 'sinatra'
 require 'json'
 require 'jwt'
 require './database'
+require 'geocoder'
+
+Geocoder.configure(:units => :km)
 
 class DogeParkApp < Sinatra::Base
 
@@ -205,9 +208,9 @@ class DogeParkApp < Sinatra::Base
 
     verify_token(token) do
       verify_user(username, password) do
-        user = get_user(username)
-        users = nearby_users(user[:id], {latitude: user, longitude: user[:longitude]}, radius)
-        {:message => "You made it rain #{amount} Ð on #{users.length} shibes in a #{radius} km radius around your saved location #{user[:latitude]} lat, #{user[:longitude]} long"}.to_json
+        user = @db.get_user(username)
+        users = nearby_users(user[:id], {latitude: user[:latitude], longitude: user[:longitude]}, radius)
+        {:message => "You made it rain #{amount} Ð on #{users.count} shibes in a #{radius} km radius around your saved location #{user[:latitude]} lat, #{user[:longitude]} long"}.to_json
       end
     end
     

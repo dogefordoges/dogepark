@@ -105,8 +105,8 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
 
     it "posts rain" do
       uri = URI(@base + "/rain")
-      payload = {username: "hello", password: "world", address: @address, latitude: 0.0, longitude: 0.0, amount: 100, radius: 10, token: $token}
-      expected_response = {"message" => "You made it rain 100 Ð on 20 shibes in a 10 km radius around coordinate 0.0 lat, 0.0 long"}
+      payload = {username: "hello", password: "world", amount: 100, radius: 10, token: $token}
+      expected_response = {"message" => "You made it rain 100 Ð on 1 shibes in a 10 km radius around your saved location 0.0 lat, 0.0 long"}
 
       response = post(uri, payload)
       body = JSON.parse(response.body)      
