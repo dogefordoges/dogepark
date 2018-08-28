@@ -26,7 +26,11 @@ class Database
     @db[:users].insert(user)
   end
 
-  def get_user(name)
+  def get_user(id)
+    @db[:users].where(id: id).first
+  end
+
+  def get_user_by_name(name)
     @db[:users].where(name: name).first
   end
 

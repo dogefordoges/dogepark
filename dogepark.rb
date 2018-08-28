@@ -6,7 +6,12 @@ require './database'
 require 'geocoder'
 
 Geocoder.configure(:units => :km)
-Sequel::Model.plugin :json_serializer
+
+class Sequel::Dataset
+  def to_json
+    all.to_json
+  end
+end
 
 class DogeParkApp < Sinatra::Base
 
@@ -15,7 +20,8 @@ class DogeParkApp < Sinatra::Base
 
     @accounts = {}
     @hmac_secret = "foobar"
-    @db = Database.new  
+    @db = Database.new
+    @signed_in = {} # maps JWT tokens to user id's
     
   end
   
@@ -25,10 +31,10 @@ class DogeParkApp < Sinatra::Base
     @accounts[address] = {:balance => 420.4242424242}
   end
 
-  def gen_jwt_token(data)
+  def gen_jwt_token(data, user_id)
     duration = 4 * 3600 # 4 hours
     expiration = Time.now.to_i + duration
-    expiring_payload = { data: data, exp: expiration }
+    expiring_payload = { data: data, id: user_id, exp: expiration }
     JWT.encode expiring_payload, @hmac_secret, 'HS256'
   end
 
@@ -60,8 +66,9 @@ class DogeParkApp < Sinatra::Base
       user = @db.get_user(username)
       if user
         if user[:password] == password
-          token = gen_jwt_token("signed_in")
-          {:message => "welcome to dogepark!", :url => "/dogepark?username=#{username}&token=#{token}", :token => token}.to_json
+          token = gen_jwt_token("signed_in", user[:id])
+          @signed_in[token] = user[:name]
+          {:message => "welcome to dogepark!", :token => token}.to_json
         else
           {:message => "password incorrect", :url => "none"}.to_json
         end
@@ -78,7 +85,7 @@ class DogeParkApp < Sinatra::Base
     username = payload['username']
     password = payload['password']
     if password && username
-      user = @db.get_user(username)
+      user = @db.get_user_by_name(username)
       if user
         {:message => "already signed up", :url => "none"}.to_json
       else
@@ -91,7 +98,6 @@ class DogeParkApp < Sinatra::Base
   end
 
   get '/dogepark' do
-    username = params["username"]
     token = params["token"]
     
     if valid_token? token
@@ -99,7 +105,6 @@ class DogeParkApp < Sinatra::Base
       if user
         erb :dogepark, :locals => {
               :address => user[:public_key],
-              :username => username,
               :token => token
             }
       else
@@ -114,13 +119,14 @@ class DogeParkApp < Sinatra::Base
     if valid_token? token
       block.call
     else
+      @signed_in[token] = nil if @signed_in[token]        
       status 403
       body "Invalid token"
     end
   end
 
-  def verify_user(username, password, &block)
-    user = @db.get_user(username)
+  def verify_user(id, password, &block)
+    user = @db.get_user_by_name(id)
     if user
       if user[:password] == password
         block.call
@@ -135,12 +141,13 @@ class DogeParkApp < Sinatra::Base
   end
 
   get '/balance' do
-    address = params['address']
     token = params['token']
 
     verify_token(token) do
-      if @accounts.has_key? address
-        {:balance => @accounts[address][:balance]}.to_json
+      id = @signed_in[token]
+      user = @db.get_user(id)
+      if @accounts.has_key? user[:public_key]
+        {:balance => @accounts[user[:public_key]][:balance]}.to_json
       else
         status 500
         body "Address not found"
@@ -148,19 +155,19 @@ class DogeParkApp < Sinatra::Base
     end
   end
 
-
   post '/location' do
 
     payload = JSON.parse(request.body.read)
-    username = payload["username"]
+    
+    token = payload["token"]
     password = payload["password"]
     latitude = payload["latitude"]
-    longitude = payload["longitude"]
-    token = payload["token"]
+    longitude = payload["longitude"]    
 
     verify_token(token) do
-      verify_user(username, password) do
-        @db.update_location(username, {latitude: latitude, longitude: longitude})
+      id = @signed_in[token]
+      verify_user(id, password) do
+        @db.update_location(id, {latitude: latitude, longitude: longitude})
         {:message => "Location saved!"}.to_json
       end
     end
@@ -169,15 +176,15 @@ class DogeParkApp < Sinatra::Base
 
   post '/withdraw' do
     payload = JSON.parse(request.body.read)
-    username = payload["username"]
-    password = payload["password"]  
-    address = payload["address"]
+    token = payload["token"]
+    password = payload["password"]
     withdraw_address = payload["withdrawAddress"]
     amount = payload["amount"]
-    token = payload["token"]
+    
 
     verify_token(token) do
-      verify_user(username, password) do
+      id = @signed_in[token]
+      verify_user(id, password) do
         {:message => "#{amount} Ð was sent from your account to #{withdraw_address}"}.to_json
       end
     end
@@ -199,18 +206,18 @@ class DogeParkApp < Sinatra::Base
 
   post '/rain' do
     payload = JSON.parse(request.body.read)
-    
-    username = payload["username"]
+
+    token = payload["token"]
     password = payload["password"]
-    address = payload["address"]
     amount = payload["amount"]
     radius = payload["radius"]
-    token = payload["token"]
+    
 
     verify_token(token) do
-      verify_user(username, password) do
-        user = @db.get_user(username)
-        users = nearby_users(user[:id], {latitude: user[:latitude], longitude: user[:longitude]}, radius)
+      id = @signed_in[token]
+      verify_user(id, password) do
+        user = @db.get_user(id)
+        users = nearby_users(id, {latitude: user[:latitude], longitude: user[:longitude]}, radius)
         log = "You made it rain #{amount} Ð on #{users.count} shibes in a #{radius} km radius around your saved location #{user[:latitude]} lat, #{user[:longitude]} long"
         #TODO: insert rain logs for every selected user        
         {:message => log}.to_json
@@ -221,15 +228,16 @@ class DogeParkApp < Sinatra::Base
 
   post '/bowl' do
     payload = JSON.parse(request.body.read)
-    username = payload["username"]
+
+    token = payload["token"]
     password = payload["password"]
-    address = payload["address"]
     bowl_amount = payload["bowlAmount"]
     bite_amount = payload["biteAmount"]
-    token = payload["token"]
+    
 
     verify_token(token) do
-      verify_user(username, password) do
+      id = @signed_in[token]
+      verify_user(id, password) do
         {:message => "Here is your new bowl code: 0x123456. Total of #{bowl_amount/bite_amount} bites at #{bite_amount} Ð a piece"}.to_json
       end
     end
@@ -238,7 +246,6 @@ class DogeParkApp < Sinatra::Base
 
   post '/bite' do
     payload = JSON.parse(request.body.read)
-    address = payload["address"]
     bowl_code = payload["bowlCode"]
     token = payload["token"]
 
@@ -248,22 +255,20 @@ class DogeParkApp < Sinatra::Base
   end
 
   get '/rainlogs' do
-    address = params["address"]
     token = params["token"]    
 
     verify_token(token) do
-      user = @db.get_user_by_public_key(address)
-      {rainLogs: dataset_to_array(@db.get_rain_logs(user[:id]))}.to_json
+      id = @signed_in[token]
+      {rainLogs: @db.get_rain_logs(id)}.to_json
     end
   end
 
   get '/bowls' do
-    address = params["address"]
     token = params["token"]    
     
     verify_token(token) do
-      user = @db.get_user_by_public_key(address)
-      {bowls: dataset_to_array(@db.get_bowls(user[:id]))}.to_json
+      id = @signed_in[token]
+      {bowls: @db.get_bowls(id)}.to_json
     end
   end
 

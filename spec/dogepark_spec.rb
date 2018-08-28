@@ -70,6 +70,14 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
       expect(response.code).to eq "200"
       expect(body["message"]).to eq "welcome to dogepark!"
       $token = body["token"]
+      $id = body["id"]
+    end
+
+    it "signs up/signs in second user" do
+      post(@base + "/signup", {username: "fred", password: "frankiedoodle"})
+      body = JSON.parse(post(@base + "/signin", {username: "fred", password: "frankiedoodle"}).body)
+      $token2 = body["token"]
+      $id2 = body["id"]
     end
 
   end
@@ -90,6 +98,9 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
       body = JSON.parse(response.body)      
       expect(response.code).to eq "200"
       expect(body).to eq expected_response
+
+      # posts second user location
+      post(uri, {username: "fred", password: "frankiedoodle", latitude: "0.0", longitude: "0.0", token: $token2})
     end
 
     it "posts withdraw" do
@@ -117,7 +128,7 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
 
     it "posts bowl" do
       uri = URI(@base + "/bowl")
-      payload = {username: "hello", password: "world", address: @address, bowlAmount: 100, biteAmount: 1, token: $token}
+      payload = {username: "hello", password: "world", id: @address, bowlAmount: 100, biteAmount: 1, token: $token}
       expected_response = {"message" => "Here is your new bowl code: 0x123456. Total of 100 bites at 1 Ð a piece"}
 
       response = post(uri, payload)
@@ -133,7 +144,7 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
       expected_response = {"message" => "You got a bite of 20 Ð!"}
 
       response = post(uri, payload)
-      body = JSON.parse(response.body)      
+      body = JSON.parse(response.body)
       expect(response.code).to eq "200"
       expect(body).to eq expected_response      
             
