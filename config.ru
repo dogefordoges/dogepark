@@ -1,3 +1,3 @@
-require './dogepark.rb'
+require './app/dogepark.rb'
 
 run DogeParkApp

@@ -1,7 +1,7 @@
 # coding: utf-8
 require 'net/http'
 require 'json'
-require './database'
+require './app/database'
 
 def post(uri, json_data)
   req = Net::HTTP::Post.new(uri, 'Content-Type' => 'application/json')

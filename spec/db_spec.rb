@@ -1,4 +1,4 @@
-require './database'
+require './app/database'
 
 RSpec.describe Database, "Dogepark Postgres DB Unit Tests" do
   
@@ -33,7 +33,10 @@ RSpec.describe Database, "Dogepark Postgres DB Unit Tests" do
     end
 
     it "gets user information" do
-      user = @db.get_user("hello")
+      user = @db.get_user_by_name("hello")
+      
+      $id = user[:id]
+      
       expect(user[:id])
       expect(user[:name]).to eq "hello"
       expect(user[:password]).to eq "world"
@@ -44,9 +47,9 @@ RSpec.describe Database, "Dogepark Postgres DB Unit Tests" do
     end
 
     it "updates users location" do
-      @db.update_location("hello", {latitude: 42.42, longitude: 42.42})
+      @db.update_location($id, {latitude: 42.42, longitude: 42.42})
 
-      user = @db.get_user("hello")
+      user = @db.get_user($id)
       expect(user[:latitude]).to eq 42.42
       expect(user[:longitude]).to eq 42.42
     end
@@ -67,6 +70,7 @@ RSpec.describe Database, "Dogepark Postgres DB Unit Tests" do
       user = @db.get_user_by_public_key("foo")
       expect(user[:name]).to eq "hello"
     end
+    
   end
 
   context 'creates bowls table and inserts a new bowl' do
@@ -84,12 +88,12 @@ RSpec.describe Database, "Dogepark Postgres DB Unit Tests" do
     end
 
     it "inserts a bowl" do
-      user = @db.get_user("hello")
+      user = @db.get_user($id)
       @db.insert_bowl({user_id: user[:id], code: "foo", total: 100, bite_size: 10})
     end
 
     it "gets bowls" do
-      user = @db.get_user("hello")
+      user = @db.get_user($id)
       bowls = @db.get_bowls(user[:id])
       
       expect(bowls.count > 0)
@@ -116,12 +120,12 @@ RSpec.describe Database, "Dogepark Postgres DB Unit Tests" do
     end
 
     it "inserts a rain log" do
-      user = @db.get_user("hello")
+      user = @db.get_user($id)
       @db.insert_rain_log(user[:id], "foo")
     end
 
     it "gets rain logs" do
-      user = @db.get_user("hello")
+      user = @db.get_user($id)
       logs = @db.get_rain_logs(user[:id])
 
       expect(logs.count > 0)
