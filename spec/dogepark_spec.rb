@@ -70,103 +70,101 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
       expect(response.code).to eq "200"
       expect(body["message"]).to eq "welcome to dogepark!"
       $token = body["token"]
-      $id = body["id"]
     end
 
     it "signs up/signs in second user" do
-      post(@base + "/signup", {username: "fred", password: "frankiedoodle"})
-      body = JSON.parse(post(@base + "/signin", {username: "fred", password: "frankiedoodle"}).body)
+      post(URI(@base + "/signup"), {username: "fred", password: "frankiedoodle"})
+      body = JSON.parse(post(URI(@base + "/signin"), {username: "fred", password: "frankiedoodle"}).body)
       $token2 = body["token"]
-      $id2 = body["id"]
     end
 
   end
 
-  context "Dogepark interaction" do
+  # context "Dogepark interaction" do
     
-    it "gets balance" do
-      uri = URI(@base + "/balance?address=" + @address + "&token=" + $token)
-      response = JSON.parse(Net::HTTP.get(uri))
-      expect(response.has_key? "balance").to eq true
-    end
+  #   it "gets balance" do
+  #     uri = URI(@base + "/balance?token=" + $token)
+  #     response = JSON.parse(Net::HTTP.get(uri))
+  #     expect(response.has_key? "balance").to eq true
+  #   end
 
-    it "posts location" do
-      uri = URI(@base + "/location")
-      payload = {username: "hello", password: "world", latitude: "0.0", longitude: "0.0", token: $token}
-      expected_response = {"message" => "Location saved!"}
-      response = post(uri, payload)
-      body = JSON.parse(response.body)      
-      expect(response.code).to eq "200"
-      expect(body).to eq expected_response
+  #   it "posts location" do
+  #     uri = URI(@base + "/location")
+  #     payload = {password: "world", latitude: "0.0", longitude: "0.0", token: $token}
+  #     expected_response = {"message" => "Location saved!"}
+  #     response = post(uri, payload)
+  #     body = JSON.parse(response.body)      
+  #     expect(response.code).to eq "200"
+  #     expect(body).to eq expected_response
 
-      # posts second user location
-      post(uri, {username: "fred", password: "frankiedoodle", latitude: "0.0", longitude: "0.0", token: $token2})
-    end
+  #     # posts second user location
+  #     post(uri, {password: "frankiedoodle", latitude: "0.0", longitude: "0.0", token: $token2})
+  #   end
 
-    it "posts withdraw" do
-      uri = URI(@base + "/withdraw")
-      payload = {username: "hello", password: "world", address: @address, withdrawAddress: "0x1234567781223", amount: 100, token: $token}
-      expected_response = {"message" => "100 Ð was sent from your account to 0x1234567781223"}
+  #   it "posts withdraw" do
+  #     uri = URI(@base + "/withdraw")
+  #     payload = {password: "world", address: @address, withdrawAddress: "0x1234567781223", amount: 100, token: $token}
+  #     expected_response = {"message" => "100 Ð was sent from your account to 0x1234567781223"}
 
-      response = post(uri, payload)
-      body = JSON.parse(response.body)      
-      expect(response.code).to eq "200"
-      expect(body).to eq expected_response      
-    end
+  #     response = post(uri, payload)
+  #     body = JSON.parse(response.body)      
+  #     expect(response.code).to eq "200"
+  #     expect(body).to eq expected_response      
+  #   end
 
-    it "posts rain" do
-      uri = URI(@base + "/rain")
-      payload = {username: "hello", password: "world", amount: 100, radius: 10, token: $token}
-      expected_response = {"message" => "You made it rain 100 Ð on 1 shibes in a 10 km radius around your saved location 0.0 lat, 0.0 long"}
+  #   it "posts rain" do
+  #     uri = URI(@base + "/rain")
+  #     payload = {password: "world", amount: 100, radius: 10, token: $token}
+  #     expected_response = {"message" => "You made it rain 100 Ð on 1 shibes in a 10 km radius around your saved location 0.0 lat, 0.0 long"}
 
-      response = post(uri, payload)
-      body = JSON.parse(response.body)      
-      expect(response.code).to eq "200"
-      expect(body).to eq expected_response      
+  #     response = post(uri, payload)
+  #     body = JSON.parse(response.body)      
+  #     expect(response.code).to eq "200"
+  #     expect(body).to eq expected_response      
       
-    end
+  #   end
 
-    it "posts bowl" do
-      uri = URI(@base + "/bowl")
-      payload = {username: "hello", password: "world", id: @address, bowlAmount: 100, biteAmount: 1, token: $token}
-      expected_response = {"message" => "Here is your new bowl code: 0x123456. Total of 100 bites at 1 Ð a piece"}
+  #   it "posts bowl" do
+  #     uri = URI(@base + "/bowl")
+  #     payload = {password: "world", id: @address, bowlAmount: 100, biteAmount: 1, token: $token}
+  #     expected_response = {"message" => "Here is your new bowl code: 0x123456. Total of 100 bites at 1 Ð a piece"}
 
-      response = post(uri, payload)
-      body = JSON.parse(response.body)      
-      expect(response.code).to eq "200"
-      expect(body).to eq expected_response      
+  #     response = post(uri, payload)
+  #     body = JSON.parse(response.body)      
+  #     expect(response.code).to eq "200"
+  #     expect(body).to eq expected_response      
       
-    end
+  #   end
 
-    it "posts bite" do
-      uri = URI(@base + "/bite")
-      payload = {address: @address, bowlCode: "0x123456", token: $token}
-      expected_response = {"message" => "You got a bite of 20 Ð!"}
+  #   it "posts bite" do
+  #     uri = URI(@base + "/bite")
+  #     payload = {address: @address, bowlCode: "0x123456", token: $token}
+  #     expected_response = {"message" => "You got a bite of 20 Ð!"}
 
-      response = post(uri, payload)
-      body = JSON.parse(response.body)
-      expect(response.code).to eq "200"
-      expect(body).to eq expected_response      
+  #     response = post(uri, payload)
+  #     body = JSON.parse(response.body)
+  #     expect(response.code).to eq "200"
+  #     expect(body).to eq expected_response      
             
-    end
+  #   end
 
-    it "gets rain logs" do
-      uri = URI(@base + "/rainlogs?address=" + @address + "&token=" + $token)
-      response = JSON.parse(Net::HTTP.get(uri))
-      expect(response.has_key? "rainLogs").to eq true
-      expect(response["rainLogs"].class).to eq Array
-      expect(response["rainLogs"].length > 0).to eq true
-      expect(response["rainLogs"].first.keys).to eq [:keys]
-    end
+  #   it "gets rain logs" do
+  #     uri = URI(@base + "/rainlogs?token=" + $token)
+  #     response = JSON.parse(Net::HTTP.get(uri))
+  #     expect(response.has_key? "rainLogs").to eq true
+  #     expect(response["rainLogs"].class).to eq Array
+  #     expect(response["rainLogs"].length > 0).to eq true
+  #     expect(response["rainLogs"].first.keys).to eq [:keys]
+  #   end
 
-    it "gets bowls" do
-      uri = URI(@base + "/bowls?address=" + @address + "&token=" + $token)
-      response = JSON.parse(Net::HTTP.get(uri))
-      expect(response.has_key? "bowls").to eq true
-      expect(response["bowls"].class).to eq Array
-      expect(response["bowls"].length > 0).to eq true
-      bowl_data = response["bowls"].first      
-      expect(bowl_data.keys).to eq [:code, :total, :bite_size]
-    end
-  end
+  #   it "gets bowls" do
+  #     uri = URI(@base + "/bowls?token=" + $token)
+  #     response = JSON.parse(Net::HTTP.get(uri))
+  #     expect(response.has_key? "bowls").to eq true
+  #     expect(response["bowls"].class).to eq Array
+  #     expect(response["bowls"].length > 0).to eq true
+  #     bowl_data = response["bowls"].first      
+  #     expect(bowl_data.keys).to eq [:code, :total, :bite_size]
+  #   end
+  # end
 end
