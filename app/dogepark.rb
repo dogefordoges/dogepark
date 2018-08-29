@@ -3,9 +3,7 @@ require 'sinatra'
 require 'json'
 require 'jwt'
 require './app/database'
-require 'geocoder'
-
-Geocoder.configure(:units => :km)
+require './app/location'
 
 class Sequel::Dataset
   def to_a
@@ -14,8 +12,7 @@ class Sequel::Dataset
       arr << x
     end
   end
-end
-  
+end  
 
 class DogeParkApp < Sinatra::Base
 
@@ -197,19 +194,6 @@ class DogeParkApp < Sinatra::Base
 
   end
 
-  def km_between(coord, coord2)
-    Geocoder::Calculations.distance_between(
-      [coord[:latitude], coord[:longitude]],
-      [coord2[:latitude], coord2[:longitude]]
-    )
-  end
-
-  def nearby_users(id, center, radius)
-    @db.get_users_locations.select do |user_location|
-      km_between(center, user_location) < radius && user_location[:id] != id
-    end
-  end
-
   post '/rain' do
     payload = JSON.parse(request.body.read)
 
@@ -223,9 +207,15 @@ class DogeParkApp < Sinatra::Base
       id = @signed_in[token]
       verify_user(id, password) do
         user = @db.get_user(id)
-        users = nearby_users(id, {latitude: user[:latitude], longitude: user[:longitude]}, radius)
+        
+        locations = @db.get_users_locations.to_a # Gets all user's locations
+        users = Location::nearby_users(locations, id, {latitude: user[:latitude], longitude: user[:longitude]}, radius)
+        
         log = "You made it rain #{amount} Ð on #{users.count} shibes in a #{radius} km radius around your saved location #{user[:latitude]} lat, #{user[:longitude]} long"
-        #TODO: insert rain logs for every selected user        
+        users.each do |user|
+          @db.insert_rain_log(user[:id], log)
+        end
+        
         {:message => log}.to_json
       end
     end
@@ -244,6 +234,7 @@ class DogeParkApp < Sinatra::Base
     verify_token(token) do
       id = @signed_in[token]
       verify_user(id, password) do
+        @db.insert_bowl({user_id: id, code: "0x123456", total: 420, bite_size: 42})
         {:message => "Here is your new bowl code: 0x123456. Total of #{bowl_amount/bite_amount} bites at #{bite_amount} Ð a piece"}.to_json
       end
     end

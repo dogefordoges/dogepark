@@ -2,12 +2,22 @@
 require 'net/http'
 require 'json'
 require './app/database'
+require './app/location'
 
 def post(uri, json_data)
   req = Net::HTTP::Post.new(uri, 'Content-Type' => 'application/json')
   req.body = json_data.to_json 
   http = Net::HTTP.new(uri.host, uri.port)
   http.request(req)
+end
+
+class Sequel::Dataset
+  def to_a
+    arr = []
+    all.each do |x|
+      arr << x
+    end
+  end
 end
 
 RSpec.describe Net::HTTP, "Dogepark Server Tests" do
@@ -112,10 +122,28 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
       expect(body).to eq expected_response      
     end
 
+    it "gets nearby users" do
+      locations = @db.get_users_locations.to_a
+
+      expect(locations.class).to eq Array
+
+      location = locations.first
+
+      users = Location::nearby_users(locations, location[:id], {latitude: location[:latitude], longitude: location[:longitude]}, 10)
+
+      expect(users.class).to eq Array
+
+      user = users.first
+      
+      expect(user[:id])
+      expect(user[:latitude])
+      expect(user[:longitude])
+    end
+
     it "posts rain" do
       uri = URI(@base + "/rain")
       payload = {password: "world", amount: 100, radius: 10, token: $token}
-      expected_response = {"message" => "You made it rain 100 Ð on 2 shibes in a 10 km radius around your saved location 0.0 lat, 0.0 long"}
+      expected_response = {"message" => "You made it rain 100 Ð on 1 shibes in a 10 km radius around your saved location 0.0 lat, 0.0 long"}
 
       response = post(uri, payload)
       body = JSON.parse(response.body)      
@@ -149,12 +177,12 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
     end
 
     it "gets rain logs" do
-      uri = URI(@base + "/rainlogs?token=" + $token)
+      uri = URI(@base + "/rainlogs?token=" + $token2)
       response = JSON.parse(Net::HTTP.get(uri))
       expect(response.has_key? "rainLogs").to eq true
       expect(response["rainLogs"].class).to eq Array
       expect(response["rainLogs"].length > 0).to eq true
-      expect(response["rainLogs"].first.keys).to eq [:keys]
+      expect(response["rainLogs"].first.keys).to eq ["log"]
     end
 
     it "gets bowls" do
@@ -164,7 +192,7 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
       expect(response["bowls"].class).to eq Array
       expect(response["bowls"].length > 0).to eq true
       bowl_data = response["bowls"].first      
-      expect(bowl_data.keys).to eq [:code, :total, :bite_size]
+      expect(bowl_data.keys).to eq ["code", "total", "bite_size"]
     end
   end
 end
