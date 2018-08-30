@@ -188,7 +188,7 @@ class DogeParkApp < Sinatra::Base
     verify_token(token) do
       id = @signed_in[token]
       verify_user(id, password) do
-        {:message => "#{amount} Ð was sent from your account to #{withdraw_address}"}.to_json
+        {:amount => amount, :withdrawAddress => withdraw_address}.to_json
       end
     end
 
@@ -210,13 +210,14 @@ class DogeParkApp < Sinatra::Base
         
         locations = @db.get_users_locations.to_a # Gets all user's locations
         users = Location::nearby_users(locations, id, {latitude: user[:latitude], longitude: user[:longitude]}, radius)
-        
+
+        #TODO change schema of rain log
         log = "You made it rain #{amount} Ð on #{users.count} shibes in a #{radius} km radius around your saved location #{user[:latitude]} lat, #{user[:longitude]} long"
         users.each do |user|
           @db.insert_rain_log(user[:id], log)
         end
         
-        {:message => log}.to_json
+        {:amount => amount, :numShibes => users.count, :radius => radius, :latitude => user[:latitude], :longitude => user[:longitude]}.to_json
       end
     end
     
@@ -234,8 +235,8 @@ class DogeParkApp < Sinatra::Base
     verify_token(token) do
       id = @signed_in[token]
       verify_user(id, password) do
-        @db.insert_bowl({user_id: id, code: "0x123456", total: 420, bite_size: 42})
-        {:message => "Here is your new bowl code: 0x123456. Total of #{bowl_amount/bite_amount} bites at #{bite_amount} Ð a piece"}.to_json
+        @db.insert_bowl({user_id: id, code: "0x123456", total: bowl_amount, bite_size: bite_amount})
+        {:code => "0x123456", :numBites => bowl_amount/bite_amount, :biteAmount => bite_amount}.to_json
       end
     end
     
@@ -247,7 +248,7 @@ class DogeParkApp < Sinatra::Base
     token = payload["token"]
 
     verify_token(token) do
-      {:message => "You got a bite of 20 Ð!"}.to_json
+      {:biteSize => 20}.to_json
     end
   end
 

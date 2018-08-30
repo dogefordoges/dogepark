@@ -114,7 +114,7 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
     it "posts withdraw" do
       uri = URI(@base + "/withdraw")
       payload = {password: "world", address: @address, withdrawAddress: "0x1234567781223", amount: 100, token: $token}
-      expected_response = {"message" => "100 Ð was sent from your account to 0x1234567781223"}
+      expected_response = {"amount" => 100, "withdrawAddress" => "0x1234567781223"}      
 
       response = post(uri, payload)
       body = JSON.parse(response.body)      
@@ -143,7 +143,7 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
     it "posts rain" do
       uri = URI(@base + "/rain")
       payload = {password: "world", amount: 100, radius: 10, token: $token}
-      expected_response = {"message" => "You made it rain 100 Ð on 1 shibes in a 10 km radius around your saved location 0.0 lat, 0.0 long"}
+      expected_response = {"amount" => 100, "numShibes" => 1, "radius" => 10, "latitude" => 0.0, "longitude" => 0.0}      
 
       response = post(uri, payload)
       body = JSON.parse(response.body)      
@@ -155,7 +155,7 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
     it "posts bowl" do
       uri = URI(@base + "/bowl")
       payload = {password: "world", id: @address, bowlAmount: 100, biteAmount: 1, token: $token}
-      expected_response = {"message" => "Here is your new bowl code: 0x123456. Total of 100 bites at 1 Ð a piece"}
+      expected_response = {"code" => "0x123456", "numBites" => 100, "biteAmount" => 1}      
 
       response = post(uri, payload)
       body = JSON.parse(response.body)      
@@ -167,7 +167,7 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
     it "posts bite" do
       uri = URI(@base + "/bite")
       payload = {bowlCode: "0x123456", token: $token}
-      expected_response = {"message" => "You got a bite of 20 Ð!"}
+      expected_response = {"biteSize" => 20}      
 
       response = post(uri, payload)
       body = JSON.parse(response.body)
