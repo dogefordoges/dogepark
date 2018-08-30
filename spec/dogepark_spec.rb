@@ -182,7 +182,7 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
       expect(response.has_key? "rainLogs").to eq true
       expect(response["rainLogs"].class).to eq Array
       expect(response["rainLogs"].length > 0).to eq true
-      expect(response["rainLogs"].first.keys).to eq ["log"]
+      expect(response["rainLogs"].first.keys).to eq ["id", "user_id", "amount", "shibe_count", "radius", "latitude", "longitude"]
     end
 
     it "gets bowls" do

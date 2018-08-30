@@ -211,13 +211,11 @@ class DogeParkApp < Sinatra::Base
         locations = @db.get_users_locations.to_a # Gets all user's locations
         users = Location::nearby_users(locations, id, {latitude: user[:latitude], longitude: user[:longitude]}, radius)
 
-        #TODO change schema of rain log
-        log = "You made it rain #{amount} Ð on #{users.count} shibes in a #{radius} km radius around your saved location #{user[:latitude]} lat, #{user[:longitude]} long"
         users.each do |user|
-          @db.insert_rain_log(user[:id], log)
+          @db.insert_rain_log({user_id: user[:id], amount: amount, shibe_count: users.count, radius: radius, latitude: user[:latitude], longitude: user[:longitude]})
         end
         
-        {:amount => amount, :numShibes => users.count, :radius => radius, :latitude => user[:latitude], :longitude => user[:longitude]}.to_json
+        {:amount => amount, :numShibes => users.count, :radius => radius, :latitude => user[:latitude], :longitude => user[:longitude]}.to_json                                                               
       end
     end
     
