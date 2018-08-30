@@ -121,7 +121,7 @@ RSpec.describe Database, "Dogepark Postgres DB Unit Tests" do
 
     it "inserts a rain log" do
       user = @db.get_user($id)
-      @db.insert_rain_log(user[:id], "foo")
+      @db.insert_rain_log({user_id: user[:id], amount: 100, shibe_count: 42, radius: 10, latitude: 0.0, longitude: 0.0})
     end
 
     it "gets rain logs" do
@@ -131,8 +131,8 @@ RSpec.describe Database, "Dogepark Postgres DB Unit Tests" do
       expect(logs.count > 0)
 
       log = logs.first
-      expect(log[:log]).to eq "foo"
-      expect(log.keys).to eq [:log]
+      expect(log[:amount]).to eq 100
+      expect(log.keys).to eq [:id, :user_id, :amount, :shibe_count, :radius,:latitude, :longitude]
     end
     
   end

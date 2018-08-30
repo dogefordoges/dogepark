@@ -72,7 +72,11 @@ class Database
     @db.create_table :rain_logs do
       primary_key :id
       foreign_key :user_id, :users, unique: true
-      String :log, null: false
+      Float :amount, null: false
+      Int :shibe_count, null: false
+      Float :radius, null: false
+      Float :latitude, null: false
+      Float :longitude, null: false
     end
   end
 
@@ -80,12 +84,12 @@ class Database
     @db.run("drop table rain_logs")
   end
 
-  def insert_rain_log(user_id, log)
-    @db[:rain_logs].insert({user_id: user_id, log: log})
+  def insert_rain_log(rain_log)
+    @db[:rain_logs].insert(rain_log)
   end
 
   def get_rain_logs(user_id)
-    @db[:rain_logs].select(:log).where(user_id: user_id)
+    @db[:rain_logs].select().where(user_id: user_id)
   end
 
   #For testing
