@@ -74,7 +74,7 @@ class DogeParkApp < Sinatra::Base
     else
       halt(404)
     end
-  end  
+  end
 
   post '/signin' do
     payload = JSON.parse(request.body.read)
@@ -88,10 +88,10 @@ class DogeParkApp < Sinatra::Base
           @signed_in[token] = user[:id]
           {:message => "welcome to dogepark!", :token => token}.to_json
         else
-          {:message => "password incorrect"}.to_json
+          {:message => "password incorrect", :token => "403 Forbidden"}.to_json
         end
       else
-        {:message => "not signed up"}.to_json
+        {:message => "not signed up", :token => "403 Forbidden"}.to_json
       end
     else
       halt(404)
@@ -153,7 +153,7 @@ class DogeParkApp < Sinatra::Base
         {:balance => @accounts[user[:public_key]][:balance]}.to_json
       else
         status 500
-        body "Address not found"
+        body "Public key not found"
       end
     end
   end

@@ -42,7 +42,10 @@ type alias Model =
 
 
 type alias Response =
-    { message : String, url : String }
+    { message : String }
+
+type alias TokenResponse =
+    { message : String, token : String }
 
 
 init : ( Model, Cmd Msg )
@@ -77,6 +80,11 @@ signUp : Model -> Cmd Msg
 signUp model =
     Http.send PostSignUp (Http.post "/signup" (Http.jsonBody (encodeSignUp model)) decodeResponse)
 
+        
+decodeResponse : Decode.Decoder Response
+decodeResponse =
+    Decode.map Response (Decode.field "message" Decode.string)
+        
 
 encodeSignUp : Model -> Encode.Value
 encodeSignUp model =
@@ -88,7 +96,15 @@ encodeSignUp model =
 
 signIn : Model -> Cmd Msg
 signIn model =
-    Http.send PostSignIn (Http.post "/signin" (Http.jsonBody (encodeSignIn model)) decodeResponse)
+    Http.send PostSignIn (Http.post "/signin" (Http.jsonBody (encodeSignIn model)) decodeTokenResponse)
+
+decodeTokenResponse : Decode.Decoder TokenResponse
+decodeTokenResponse =
+    Decode.map TokenResponse
+        (Decode.field "message" Decode.String)
+        (Decode.field "token" Decode.String)
+        
+    
 
 
 encodeSignIn : Model -> Encode.Value
@@ -97,12 +113,7 @@ encodeSignIn model =
         [ ( "username", Encode.string model.signInName )
         , ( "password", Encode.string model.signInPassword )
         ]
-
-
-decodeResponse : Decode.Decoder Response
-decodeResponse =
-    Decode.map2 Response (Decode.field "message" Decode.string) (Decode.field "url" Decode.string)
-
+        
 
 errorToString : Http.Error -> String
 errorToString error =
