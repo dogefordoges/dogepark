@@ -66,10 +66,10 @@ class DogeParkApp < Sinatra::Base
     if password && username
       user = @db.get_user_by_name(username)
       if user
-        {:message => "already signed up", :url => "none"}.to_json
+        {:message => "already signed up"}.to_json
       else
         new_user(username, password)
-        {:message => "signed up", :url => "none"}.to_json
+        {:message => "signed up"}.to_json
       end
     else
       halt(404)
@@ -88,10 +88,10 @@ class DogeParkApp < Sinatra::Base
           @signed_in[token] = user[:id]
           {:message => "welcome to dogepark!", :token => token}.to_json
         else
-          {:message => "password incorrect", :url => "none"}.to_json
+          {:message => "password incorrect"}.to_json
         end
       else
-        {:message => "not signed up", :url => "none"}.to_json
+        {:message => "not signed up"}.to_json
       end
     else
       halt(404)
