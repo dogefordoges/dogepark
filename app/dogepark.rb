@@ -56,7 +56,7 @@ class DogeParkApp < Sinatra::Base
   end
 
   get '/' do
-    erb :index, :locals => { :signed_up => "\" \"" }
+    File.read(File.join('app/public', 'index.html'))
   end
 
   post '/signup' do

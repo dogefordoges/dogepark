@@ -47,6 +47,9 @@ init flags =
 translateSignedUp : Model -> String
 translateSignedUp model =
     case model.message of
+        "" ->
+            "Hello shibe!"
+                
         "signed up" ->
             "You've been signed up! Go ahead and sign in!"
 
