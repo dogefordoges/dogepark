@@ -1,12 +1,12 @@
 # Initialize environment for demo purposes
 
-require './database'
+require './app/database'
 
 db = Database.new
 
-db.drop_bowls
-db.drop_rain_logs
-db.drop_users
+#db.drop_bowls
+#db.drop_rain_logs
+#db.drop_users
 
 db.create_users
 db.create_bowls

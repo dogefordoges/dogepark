@@ -60,7 +60,7 @@ translateSignedUp model =
             "The username you entered is not registered. Go ahead and sign up to make an account!"
 
         _ ->
-            ""
+            "error"
 
 
 
