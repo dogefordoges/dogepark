@@ -6,26 +6,17 @@ import Html.Events exposing (onInput, onClick)
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Navigation
+import Browser
+import Browser.Navigation as Navigation
 
 
 main =
-    program
+    Browser.element
         { init = init
         , view = view
         , update = update
-        , subscriptions = subscriptions
+        , subscriptions = \_ -> Sub.none
         }
-
-
-
--- SUBSCRIPTION
-
-
-subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Sub.none
-
 
 
 -- MODEL
@@ -48,9 +39,9 @@ type alias TokenResponse =
     { message : String, token : String }
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( Model "" "" "" "" "" "", Cmd.none )
+init : () -> (Model, Cmd Msg)
+init flags =
+    (Model "" "" "" "" "" "", Cmd.none)
 
 
 translateSignedUp : Model -> String
@@ -98,14 +89,13 @@ signIn : Model -> Cmd Msg
 signIn model =
     Http.send PostSignIn (Http.post "/signin" (Http.jsonBody (encodeSignIn model)) decodeTokenResponse)
 
+        
 decodeTokenResponse : Decode.Decoder TokenResponse
 decodeTokenResponse =
-    Decode.map TokenResponse
-        (Decode.field "message" Decode.String)
-        (Decode.field "token" Decode.String)
+    Decode.map2 TokenResponse
+        (Decode.field "message" Decode.string)
+        (Decode.field "token" Decode.string)
         
-    
-
 
 encodeSignIn : Model -> Encode.Value
 encodeSignIn model =
@@ -119,11 +109,13 @@ errorToString : Http.Error -> String
 errorToString error =
     case error of
         Http.BadStatus e ->
-            ("Error: " ++ (toString e.status.code) ++ " " ++ e.body)
+            ("Error Status: " ++ e.status.message)
+
+        Http.BadPayload message _ ->
+            ("Bad Payload: " ++ message)                
 
         _ ->
-            (toString error)
-
+            "error"
 
 type Msg
     = SignUpName String
@@ -134,7 +126,7 @@ type Msg
     | SignUp
     | SignIn
     | PostSignUp (Result Http.Error Response)
-    | PostSignIn (Result Http.Error Response)
+    | PostSignIn (Result Http.Error TokenResponse)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -168,20 +160,20 @@ update msg model =
             ( model, signIn model )
 
         PostSignIn (Ok response) ->
-            ( { model | message = response.message }, toDogePark response.url )
+            ( { model | message = response.message }, toDogePark response.token )
 
         PostSignIn (Err error) ->
             ( { model | message = (errorToString error) }, Cmd.none )
 
 
 toDogePark : String -> Cmd Msg
-toDogePark url =
-    case url of
-        "none" ->
+toDogePark token =
+    case token of
+        "403 Forbidden" ->
             Cmd.none
 
         _ ->
-            Navigation.load url
+            Navigation.load ( "/dogepark?token=" ++ token )
 
 
 
@@ -230,9 +222,4 @@ viewValidation model =
             else
                 ( "red", "Passwords do not match!" )
     in
-        div [ style [ ( "color", color ) ] ] [ text message ]
-
-
-urlParams : String -> String -> String
-urlParams name password =
-    "?username=" ++ name ++ "&password=" ++ password
+        div [ style "color" color ] [ text message ]
