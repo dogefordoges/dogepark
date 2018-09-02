@@ -94,3 +94,9 @@ update msg model =
 
         Price (Err error) ->
             ( model, Cmd.none )
+
+        GetLocation (Ok physicalLocation) ->
+            ( { model | physicalLocation = physicalLocation }, Cmd.none )
+
+        GetLocation (Err error) ->
+            ( { model | physicalLocation = { latitude = 0.0, longitude = 0.0, address = errorToString error }}, Cmd.none)

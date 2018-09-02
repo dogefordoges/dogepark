@@ -140,6 +140,15 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
       expect(user[:longitude])
     end
 
+    it "gets location" do
+      location = JSON.parse(Net::HTTP.get(URI(@base + "/location")))
+
+      expect(location)
+      expect(location["latitude"])
+      expect(location["longitude"])
+      expect(location["address"])
+    end
+
     it "posts rain" do
       uri = URI(@base + "/rain")
       payload = {password: "world", amount: 100, radius: 10, token: $token, usingAddress: false}
@@ -160,14 +169,14 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
       response = post(uri, payload)
       body = JSON.parse(response.body)      
       expect(response.code).to eq "200"
-      expect(body).to eq expected_response      
+      expect(body).to eq expected_response    
       
     end
 
     it "posts bite" do
       uri = URI(@base + "/bite")
       payload = {bowlCode: "0x123456", token: $token}
-      expected_response = {"biteSize" => 20}      
+      expected_response = {"biteSize" => 20}
 
       response = post(uri, payload)
       body = JSON.parse(response.body)

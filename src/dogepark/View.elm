@@ -9,10 +9,20 @@ view : Model -> Html Msg
 view model =
     div []
         [ h1 [] [ text "Welcome Shibe!" ]
+        , physicalLocationView model
         , walletView model
         , rainView model
         , bowlView model
         ]
+
+physicalLocationView : Model -> Html Msg
+physicalLocationView model =
+                     div []
+                         [ h1 [] [ text "Location" ]
+                         , h2 [] [ text ("Latitude: " ++ (String.fromFloat model.physicalLocation.latitude)) ]
+                         , h2 [] [ text ("Longitude: " ++ (String.fromFloat model.physicalLocation.latitude)) ]
+                         , h2 [] [ text ("Street Address: " ++ model.physicalLocation.address) ]
+                         ]
 
 
 walletView : Model -> Html Msg

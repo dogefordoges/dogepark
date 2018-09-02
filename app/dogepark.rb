@@ -17,7 +17,13 @@ end
 
 def ip_to_results(ip)
   results = Geocoder.search(ip)
-  {coordinates: results.first.coordinates, address: results.first.address}
+  coords = results.first.coordinates
+
+  if coords.length > 0
+    {latitude: coords[0], longitude: coords[1],  address: results.first.address}
+  else
+    {latitude: 0.0, longitude: 0.0, address: "Unavailable"}
+  end  
 end
 
 class DogeParkApp < Sinatra::Base

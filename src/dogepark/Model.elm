@@ -35,11 +35,12 @@ type alias Model =
     , bowls : List BowlData
     , token : String
     , price : Float
+    , physicalLocation : PhysicalLocation
     }
 
 
-type alias ShibeLocation =
-    { latitude : Float, longitude : Float }
+type alias PhysicalLocation =
+     { latitude: Float, longitude: Float, address: String }
 
         
 type Msg
@@ -66,6 +67,7 @@ type Msg
     | Password String
     | UpdateBowls (Result Http.Error (List BowlData))
     | Price (Result Http.Error CryptonatorResult)
+    | GetLocation (Result Http.Error PhysicalLocation)
 
       
 init : Flags -> ( Model, Cmd Msg )
@@ -90,12 +92,17 @@ init flags =
       , bowls = []
       , token = flags.token
       , price = 0
+      , physicalLocation = { latitude = 0.0
+                           , longitude = 0.0
+                           , address = "Not available"
+                           }
       }
     , Cmd.batch
         [ getBalance flags.token
         , getRainLogs flags.token
         , getBowls flags.token
         , getDogePrice
+        , getLocation
         ]
     )
 
@@ -127,6 +134,19 @@ getBowls token =
 decodeBowls : Decode.Decoder (List BowlData)
 decodeBowls =
     Decode.field "bowls" (Decode.list (Decode.map2 BowlData (Decode.field "bowlCode" Decode.string) (Decode.field "bowlAmount" Decode.float)))
+
+
+getLocation : Cmd Msg
+getLocation =
+            Http.send GetLocation (Http.get "/location" decodeLocation)
+
+
+decodeLocation : Decode.Decoder PhysicalLocation
+decodeLocation =
+               Decode.map3 PhysicalLocation
+                           (Decode.field "latitude" Decode.float)
+                           (Decode.field "longitude" Decode.float)
+                           (Decode.field "address" Decode.string)
 
 
 withdraw : Model -> Cmd Msg
@@ -205,6 +225,9 @@ errorToString error =
         Http.BadStatus e ->
             ("Error: " ++ (String.fromInt e.status.code) ++ " " ++ e.body)
 
+        Http.BadPayload message _ ->
+            ("Bad Payload: " ++ message)
+            
         _ ->
             "error"
 
