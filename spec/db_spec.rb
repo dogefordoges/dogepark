@@ -17,15 +17,9 @@ RSpec.describe Database, "Dogepark Postgres DB Unit Tests" do
     it "creates users table" do
       @db.create_users
       
-      result = @db.query "select column_name, data_type from INFORMATION_SCHEMA.COLUMNS where table_name = 'users'"
-      expect(result)
-      expect(result[:id])
-      expect(result[:name])
-      expect(result[:password])
-      expect(result[:latitude])
-      expect(result[:longitude])
-      expect(result[:public_key])
-      expect(result[:private_key])
+      #result = @db.query "select column_name, data_type from INFORMATION_SCHEMA.COLUMNS where table_name = 'users'"
+      #expect(result)
+      #expect(result.first.keys).to eq [:id, :name, :password, :latitude, :longitude, :address, :public_key, :private_key]
     end
 
     it "inserts a new user" do
@@ -64,6 +58,16 @@ RSpec.describe Database, "Dogepark Postgres DB Unit Tests" do
       expect(loc[:id])
       expect(loc[:latitude])
       expect(loc[:longitude])
+    end
+
+    it "creates new user with address" do
+      @db.insert_user({name: "fuzzy", password: "tacos", public_key: "fuzzy", private_key: "tacos", latitude: 0.0, longitude: 0.0, address: "Yellow Snickery"})
+    end
+
+    it "gets users at address" do
+      users = @db.get_users_at_address "Yellow Snickery"
+      expect(users.first)
+      expect(users.first[:id])
     end
 
     it "gets user by public key" do
@@ -119,9 +123,14 @@ RSpec.describe Database, "Dogepark Postgres DB Unit Tests" do
       expect(result[:log])
     end
 
-    it "inserts a rain log" do
+    it "inserts a rain log without address" do
       user = @db.get_user($id)
-      @db.insert_rain_log({user_id: user[:id], amount: 100, shibe_count: 42, radius: 10, latitude: 0.0, longitude: 0.0})
+      @db.insert_rain_log({user_id: user[:id], amount: 100, shibe_count: 42, radius: 10, latitude: 0.0, longitude: 0.0, using_address: false})
+    end
+
+    it "inserts a rain log with address" do
+      user = @db.get_user($id)
+      @db.insert_rain_log({user_id: user[:id], amount: 100, shibe_count: 42, radius: 10, latitude: 0.0, longitude: 0.0, address: "Yellow Snickery", using_address: true})
     end
 
     it "gets rain logs" do
@@ -132,7 +141,7 @@ RSpec.describe Database, "Dogepark Postgres DB Unit Tests" do
 
       log = logs.first
       expect(log[:amount]).to eq 100
-      expect(log.keys).to eq [:id, :user_id, :amount, :shibe_count, :radius,:latitude, :longitude]
+      expect(log.keys).to eq [:id, :user_id, :amount, :shibe_count, :radius,:latitude, :longitude, :address, :using_address]
     end
     
   end

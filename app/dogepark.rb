@@ -4,6 +4,7 @@ require 'json'
 require 'jwt'
 require './app/database'
 require './app/location'
+require 'geocoder'
 
 class Sequel::Dataset
   def to_a
@@ -12,7 +13,12 @@ class Sequel::Dataset
       arr << x
     end
   end
-end  
+end
+
+def ip_to_results(ip)
+  results = Geocoder.search(ip)
+  {coordinates: results.first.coordinates, address: results.first.address}
+end
 
 class DogeParkApp < Sinatra::Base
 
@@ -145,6 +151,11 @@ class DogeParkApp < Sinatra::Base
     end
   end
 
+  get '/location' do
+    ip = request.ip
+    ip_to_results(ip).to_json
+  end
+
   get '/balance' do
     token = params['token']
 
@@ -203,21 +214,27 @@ class DogeParkApp < Sinatra::Base
     password = payload["password"]
     amount = payload["amount"]
     radius = payload["radius"]
+    address = payload["address"]
+    using_address = payload["usingAddress"]# bool
     
 
     verify_token(token) do
       id = @signed_in[token]
       verify_user(id, password) do
         user = @db.get_user(id)
-        
-        locations = @db.get_users_locations.to_a # Gets all user's locations
-        users = Location::nearby_users(locations, id, {latitude: user[:latitude], longitude: user[:longitude]}, radius)
+
+        if using_address
+          users = @db.get_users_at_address(address)
+        else        
+          locations = @db.get_users_locations.to_a # Gets all user's locations
+          users = Location::nearby_users(locations, id, {latitude: user[:latitude], longitude: user[:longitude]}, radius)
+        end
 
         users.each do |user|
-          @db.insert_rain_log({user_id: user[:id], amount: amount, shibe_count: users.count, radius: radius, latitude: user[:latitude], longitude: user[:longitude]})
+          @db.insert_rain_log({user_id: user[:id], amount: amount, shibe_count: users.count, radius: radius, latitude: user[:latitude], longitude: user[:longitude], address: address, using_address: using_address})
         end
         
-        {:amount => amount, :numShibes => users.count, :radius => radius, :latitude => user[:latitude], :longitude => user[:longitude]}.to_json                                                               
+        {:amount => amount, :numShibes => users.count, :radius => radius, :latitude => user[:latitude], :longitude => user[:longitude], address: address}.to_json                                                               
       end
     end
     

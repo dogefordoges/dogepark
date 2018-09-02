@@ -142,8 +142,8 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
 
     it "posts rain" do
       uri = URI(@base + "/rain")
-      payload = {password: "world", amount: 100, radius: 10, token: $token}
-      expected_response = {"amount" => 100, "numShibes" => 1, "radius" => 10, "latitude" => 0.0, "longitude" => 0.0}      
+      payload = {password: "world", amount: 100, radius: 10, token: $token, usingAddress: false}
+      expected_response = {"amount" => 100, "numShibes" => 1, "radius" => 10, "latitude" => 0.0, "longitude" => 0.0, "address" => nil}
 
       response = post(uri, payload)
       body = JSON.parse(response.body)      
@@ -182,7 +182,7 @@ RSpec.describe Net::HTTP, "Dogepark Server Tests" do
       expect(response.has_key? "rainLogs").to eq true
       expect(response["rainLogs"].class).to eq Array
       expect(response["rainLogs"].length > 0).to eq true
-      expect(response["rainLogs"].first.keys).to eq ["id", "user_id", "amount", "shibe_count", "radius", "latitude", "longitude"]
+      expect(response["rainLogs"].first.keys).to eq ["id", "user_id", "amount", "shibe_count", "radius", "latitude", "longitude", "address", "using_address"]
     end
 
     it "gets bowls" do

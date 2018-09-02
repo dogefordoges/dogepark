@@ -13,6 +13,7 @@ class Database
       String :password, null: false
       Float :latitude, default: 0
       Float :longitude, default: 0
+      String :address
       String :public_key, null: false, unique: true
       String :private_key, null: false, unique: true
     end
@@ -43,7 +44,11 @@ class Database
   end
 
   def get_users_locations
-    @db[:users].select(:id, :latitude, :longitude)
+    @db[:users].select(:id, :latitude, :longitude, :address)
+  end
+
+  def get_users_at_address(address)
+    @db[:users].select(:id).where(address: address)
   end
 
   def create_bowls
@@ -71,12 +76,14 @@ class Database
   def create_rain_logs
     @db.create_table :rain_logs do
       primary_key :id
-      foreign_key :user_id, :users, unique: true
+      foreign_key :user_id, :users
       Float :amount, null: false
       Int :shibe_count, null: false
       Float :radius, null: false
       Float :latitude, null: false
       Float :longitude, null: false
+      String :address
+      Bool :using_address, null: false
     end
   end
 
