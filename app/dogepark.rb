@@ -23,6 +23,7 @@ class DogeParkApp < Sinatra::Base
     @hmac_secret = "foobar"
     @db = Database.new
     @signed_in = {} # maps JWT tokens to user id's
+    @index = File.read(File.join('app/public', 'index.html'))
     
   end
   
@@ -56,7 +57,7 @@ class DogeParkApp < Sinatra::Base
   end
 
   get '/' do
-    File.read(File.join('app/public', 'index.html'))
+    @index
   end
 
   post '/signup' do
@@ -116,6 +117,7 @@ class DogeParkApp < Sinatra::Base
       @signed_in[token] = nil if @signed_in[token]
       redirect "/"
     end
+    
   end
 
   def verify_token(token, &block)

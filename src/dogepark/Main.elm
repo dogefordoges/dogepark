@@ -4,16 +4,12 @@ import Html exposing (..)
 import Model exposing (Model, Flags, Msg, init)
 import Update exposing (update)
 import View exposing (view)
+import Browser
 
-subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Sub.none
-
-main : Program Flags Model Msg
 main =
-    Html.programWithFlags
+    Browser.element
         { init = init
-        , subscriptions = subscriptions
+        , subscriptions = \_-> Sub.none
         , update = update
         , view = view
         }

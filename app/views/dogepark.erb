@@ -2,7 +2,8 @@
 <script src="elm/dogepark.js"></script>
 <script>
     var node = document.getElementById('main');
-    var app = Elm.DogePark.embed(node, {
-	token: "<%= token %>"
+    var app = Elm.DogePark.init({
+    	node: node,
+	flags: {token: "<%= token %>"}	
     });
 </script>

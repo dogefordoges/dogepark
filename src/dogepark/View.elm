@@ -19,10 +19,10 @@ walletView : Model -> Html Msg
 walletView model =
     div []
         [ h1 [] [ text "Wallet" ]
-        , h2 [] [ text ("1 Ð = $" ++ (toString model.price)) ]
+        , h2 [] [ text ("1 Ð = $" ++ (String.fromFloat model.price)) ]
         , h2 [] [ text ("address: " ++ model.address) ]
         , div []
-            [ h2 [] [ text ("balance: " ++ (toString model.balance) ++ " Ð") ]
+            [ h2 [] [ text ("balance: " ++ (String.fromFloat model.balance) ++ " Ð") ]
             , button [ onClick RefreshBalance ] [ text "Refresh Balance" ]
             ]
         , input [ type_ "withdrawalAddress", placeholder "Withdrawal Address", onInput WithdrawalAddress ] []
@@ -35,14 +35,10 @@ walletView model =
 
 rainView : Model -> Html Msg
 rainView model =
-    let
-        l =
-            handleLocation model
-    in
         div []
             [ h1 [] [ text "Rain" ]
-            , h2 [] [ text ("latitude: " ++ (toString l.latitude)) ]
-            , h2 [] [ text ("longitude: " ++ (toString l.longitude)) ]
+            , h2 [] [ text ("latitude: 0.0") ]
+            , h2 [] [ text ("longitude: 0.0") ]
             , saveLocationView model
             , input [ type_ "rainAmount", placeholder "Rain Amount", onInput RainAmount ] []
             , input [ type_ "rainRadius", placeholder "Rain Radius", onInput RainRadius ] []
@@ -62,7 +58,7 @@ rainLogView log =
 saveLocationView : Model -> Html Msg
 saveLocationView model =
     div []
-        [ button [ onClick SaveLocation ] [ text "Save Location" ]
+        [ button [ ] [ text "Save Location" ]
         , text model.locationMessage
         ]
 
@@ -93,7 +89,7 @@ bowlDataView : BowlData -> Html Msg
 bowlDataView bowlData =
     div []
         [ text ("Bowl Code: " ++ bowlData.bowlCode ++ " ")
-        , text ("Amount: " ++ (toString bowlData.bowlAmount))
+        , text ("Amount: " ++ (String.fromFloat bowlData.bowlAmount))
         ]
 
 
