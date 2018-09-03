@@ -9,8 +9,8 @@ view : Model -> Html Msg
 view model =
     div []
         [ h1 [] [ text "Welcome Shibe!" ]
-        , physicalLocationView model
         , walletView model
+        , physicalLocationView model
         , rainView model
         , bowlView model
         ]
@@ -22,6 +22,7 @@ physicalLocationView model =
                          , h2 [] [ text ("Latitude: " ++ (String.fromFloat model.physicalLocation.latitude)) ]
                          , h2 [] [ text ("Longitude: " ++ (String.fromFloat model.physicalLocation.latitude)) ]
                          , h2 [] [ text ("Street Address: " ++ model.physicalLocation.address) ]
+                         , saveLocationView model
                          ]
 
 
@@ -47,9 +48,6 @@ rainView : Model -> Html Msg
 rainView model =
         div []
             [ h1 [] [ text "Rain" ]
-            , h2 [] [ text ("latitude: 0.0") ]
-            , h2 [] [ text ("longitude: 0.0") ]
-            , saveLocationView model
             , input [ type_ "rainAmount", placeholder "Rain Amount", onInput RainAmount ] []
             , input [ type_ "rainRadius", placeholder "Rain Radius", onInput RainRadius ] []
             , passwordView
