@@ -293,6 +293,15 @@ class DogeParkApp < Sinatra::Base
     end
   end
 
+  get '/publickey' do
+    token = params["token"]
+
+    verify_token(token) do
+      id = @signed_in[token]
+      {publicKey: @db.get_public_key(id)[:public_key]}.to_json
+    end
+  end
+
   not_found do
     'Oh no! Something went wrong!'
   end

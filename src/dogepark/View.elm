@@ -30,7 +30,7 @@ walletView model =
     div []
         [ h1 [] [ text "Wallet" ]
         , h2 [] [ text ("1 Ð = $" ++ (String.fromFloat model.price)) ]
-        , h2 [] [ text ("address: " ++ model.address) ]
+        , h2 [] [ text ("Public Key: " ++ model.publicKey) ]
         , div []
             [ h2 [] [ text ("balance: " ++ (String.fromFloat model.balance) ++ " Ð") ]
             , button [ onClick RefreshBalance ] [ text "Refresh Balance" ]

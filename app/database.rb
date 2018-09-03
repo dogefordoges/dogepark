@@ -39,6 +39,10 @@ class Database
     @db[:users].where(public_key: public_key).first
   end
 
+  def get_public_key(id)
+    @db[:users].select(:public_key).where(id: id).first
+  end
+
   def update_location(id, location)
     @db[:users].where(id: id).update(location)
   end

@@ -14,8 +14,7 @@ type alias BowlData =
 
 
 type alias Model =
-    { 
-    address : String
+    { publicKey : String
     , balance : Float
     , withdrawalAddress : String
     , withdrawalAmount : Float
@@ -36,6 +35,7 @@ type alias Model =
     , token : String
     , price : Float
     , physicalLocation : PhysicalLocation
+    , usingAddress : Bool
     }
 
 
@@ -68,11 +68,12 @@ type Msg
     | UpdateBowls (Result Http.Error (List BowlData))
     | Price (Result Http.Error CryptonatorResult)
     | GetLocation (Result Http.Error PhysicalLocation)
+    | GetPublicKey (Result Http.Error String)
 
       
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-    ( { address = "0xNotAnAddress"
+    ( { publicKey = ""
       , balance = 0
       , withdrawalAddress = ""
       , withdrawalAmount = 0
@@ -96,6 +97,7 @@ init flags =
                            , longitude = 0.0
                            , address = "Not available"
                            }
+      , usingAddress = False
       }
     , Cmd.batch
         [ getBalance flags.token
@@ -103,8 +105,19 @@ init flags =
         , getBowls flags.token
         , getDogePrice
         , getLocation
+        , getPublicKey flags.token
         ]
     )
+
+getPublicKey : String -> Cmd Msg
+getPublicKey token =
+             Http.send GetPublicKey (Http.get ( "/publickey?token=" ++ token) decodePublicKey)
+
+
+decodePublicKey : Decode.Decoder String
+decodePublicKey =
+                Decode.field "publicKey" Decode.string
+
 
 getBalance : String -> Cmd Msg
 getBalance token =
@@ -157,12 +170,10 @@ withdraw model =
 encodeWithdrawPost : Model -> Encode.Value
 encodeWithdrawPost model =
     Encode.object
-        [ ( "username", Encode.string model.username )
+        [ ( "token", Encode.string model.token )
         , ( "password", Encode.string model.password )
-        , ( "address", Encode.string model.address )
         , ( "withdrawAddress", Encode.string model.withdrawalAddress )
         , ( "amount", Encode.float model.withdrawalAmount )
-        , ( "token", Encode.string model.token )
         ]
 
 
@@ -174,12 +185,12 @@ sendRain model =
 encodeRainPost : Model -> Encode.Value
 encodeRainPost model =
         Encode.object
-            [ ( "username", Encode.string model.username )
+            [ ( "token", Encode.string model.token )
             , ( "password", Encode.string model.password )
-            , ( "address", Encode.string model.address )
             , ( "amount", Encode.float model.rainAmount )
             , ( "radius", Encode.float model.rainRadius )
-            , ( "token", Encode.string model.token )
+            , ( "address", Encode.string model.physicalLocation.address )
+            , ( "usingAddress", Encode.bool model.usingAddress )
             ]
 
 
@@ -191,12 +202,10 @@ newBowl model =
 encodeBowlPost : Model -> Encode.Value
 encodeBowlPost model =
     Encode.object
-        [ ( "username", Encode.string model.username )
+        [ ( "token", Encode.string model.token )
         , ( "password", Encode.string model.password )
-        , ( "address", Encode.string model.address )
         , ( "bowlAmount", Encode.float model.bowlAmount )
         , ( "biteAmount", Encode.float model.biteAmount )
-        , ( "token", Encode.string model.token )
         ]
 
 
@@ -208,8 +217,7 @@ bite model =
 encodeBitePost : Model -> Encode.Value
 encodeBitePost model =
     Encode.object
-        [ ( "address", Encode.string model.address )
-        , ( "bowlCode", Encode.string model.bowlCode )
+        [ ( "bowlCode", Encode.string model.bowlCode )
         , ( "token", Encode.string model.token )
         ]
 

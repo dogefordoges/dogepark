@@ -100,3 +100,10 @@ update msg model =
 
         GetLocation (Err error) ->
             ( { model | physicalLocation = { latitude = 0.0, longitude = 0.0, address = errorToString error }}, Cmd.none)
+
+        GetPublicKey (Ok publicKey) ->
+            ( { model | publicKey = publicKey }, Cmd.none )
+
+        GetPublicKey (Err error) ->
+            ( { model | publicKey = errorToString error }, Cmd.none )
+            
