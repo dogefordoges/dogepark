@@ -1,0 +1,19 @@
+git clone git@github.com:dogecoin/dogecoin
+
+sudo apt-get install build-essential libtool autotools-dev autoconf pkg-config libssl-dev libdb-dev libdb++-dev
+
+./autogen.sh
+./configure --with-incompatible-bdb #Because using bdb5.3 not 5.1
+make
+make install
+
+cd src/
+./dogecoind -reindex=1
+
+rpcport 22556 is for uploading to the blockchain and transactions
+rpcport 22555 is for localhost API access
+
+Since the dogecoin.conf is set for `txindex=1`, we must run the dogecoin daemon as so:
+```
+./dogecoind -reindex=1
+```
